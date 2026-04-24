@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.container {
+    max-width: 1300px; /* Wider to accommodate more columns */
+    margin: auto;
+    padding: 20px;
+}
+
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+h2 { color: #2c3e50; margin: 0; }
+
+.top-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* Table Styling for extra info */
+.table-responsive {
+    overflow-x: auto;
+    background: white;
+    box-shadow: 0 0 10px rgba(0,0,0,0.08);
+    border-radius: 8px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    white-space: nowrap; /* Prevents text from breaking into two lines */
+}
+
+th, td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #eee;
+    text-align: left;
+    font-size: 14px;
+}
+
+th {
+    background: #3498db;
+    color: white;
+    text-transform: uppercase;
+    font-size: 12px;
+}
+
+tr:hover { background: #f9fbfc; }
+
+.btn {
+    padding: 6px 10px;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 12px;
+    display: inline-block;
+    font-weight: bold;
+}
+
+.marks { background: #27ae60; }
+.edit { background: #f39c12; }
+.delete { background: #e74c3c; }
+.back { background: #2c3e50; }
+.add { background: #2980b9; }
+
+.info-badge {
+    background: #f1f1f1;
+    color: #555;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.empty { text-align: center; padding: 30px; color: #666; }
+</style>
+
+<div class="container">
+
+    <div class="top-bar">
+        <h2>Grade {{ grade }} Student Register</h2>
+
+        <div class="top-actions">
+            <a href="{% url 'dashboard' %}" class="btn back">Dashboard</a>
+            
+            {% if user.is_staff %}
+                <a href="{% url 'add_student' %}?grade=Grade {{ grade }}" class="btn add">+ Add New Student</a>
+            {% endif %}
+            
+            <a href="{% url 'marks_entry' %}" class="btn marks">Enter Marks</a>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Adm No</th>
+                    <th>Full Name</th>
+                    <th>Assessment No</th>
+                    <th>Year of Birth</th>
+                    <th>Parent Name</th>
+                    <th>Parent Phone</th>
+                    <th style="text-align:center;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in students %}
+                <tr>
+                    <td style="font-weight: bold; color: #1565c0;">{{ student.admission_number }}</td>
+                    <td>{{ student.first_name }} {{ student.last_name }}</td>
+                    <td><span class="info-badge">{{ student.assessment_number|default:"N/A" }}</span></td>
+                    <td>{{ student.year_of_birth|default:"-" }}</td>
+                    <td>{{ student.parent_name|default:"-" }}</td>
+                    <td>
+                        {% if student.parent_phone %}
+                            <a href="tel:{{ student.parent_phone }}" style="color: #27ae60; text-decoration: none; font-weight: bold;">
+                                📞 {{ student.parent_phone }}
+                            </a>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td style="text-align:center;">
+                        <a href="{% url 'edit_student' student.id %}" class="btn edit">Edit</a>
+
+                        {% if user.is_staff %}
+                            <a href="{% url 'delete_student' student.id %}"
+                               class="btn delete"
+                               onclick="return confirm('Delete student {{ student.first_name }}?');">
+                               Delete
+                            </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="empty">No students found in Grade {{ grade }}.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+{% endblock %}

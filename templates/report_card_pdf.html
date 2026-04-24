@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+			<title>Report Card - {{ student.admission_number }}</title>
+			<style>
+				@page {
+				size: A4 portrait;
+				margin: 0.8cm;
+				}
+				body {
+				font-family: 'Helvetica', Arial, sans-serif;
+				color: #222;
+				line-height: 1.2;
+				font-size: 9pt;
+				}
+				.header {
+				text-align: center;
+				border-bottom: 2px solid #1565c0;
+				padding-bottom: 5px;
+				margin-bottom: 10px;
+				}
+				.school-name {
+				font-size: 18pt;
+				color: #1565c0;
+				font-weight: bold;
+				text-transform: uppercase;
+				margin: 0;
+				}
+				.report-title {
+				font-size: 12pt;
+				background-color: #f1f7ff;
+				text-align: center;
+				border: 1px solid #1565c0;
+				margin: 5px 0;
+				font-weight: bold;
+				padding: 4px;
+				}
+				.info-table {
+				width: 100%;
+				margin-bottom: 10px;
+				font-size: 9.5pt;
+				}
+				.info-table td { padding: 2px 0; }
+				.label { font-weight: bold; color: #444; }
+
+				table.marks-table {
+				width: 100%;
+				border-collapse: collapse;
+				margin-bottom: 10px;
+				}
+				table.marks-table th {
+				background-color: #1565c0;
+				color: white;
+				padding: 6px;
+				text-align: left;
+				font-size: 8.5pt;
+				}
+				table.marks-table td {
+				border: 1px solid #999;
+				padding: 5px;
+				}
+				.center { text-align: center; }
+
+				.summary-box {
+				border: 1.5px solid #1565c0;
+				padding: 8px;
+				background-color: #fcfcfc;
+				margin-top: 5px;
+				}
+				.signature-row {
+				width: 100%;
+				margin-top: 30px;
+				}
+				.signature-row td {
+				width: 33%;
+				border-top: 1px solid #444;
+				text-align: center;
+				padding-top: 4px;
+				font-size: 8.5pt;
+				}
+				.footer-note {
+				text-align: center;
+				font-size: 7.5pt;
+				color: #777;
+				margin-top: 15px;
+				}
+			</style>
+		</head>
+	<body>
+
+		<div class="header">
+			<p class="school-name">AGAWO COMPREHENSIVE SCHOOL</p>
+			<p style="margin: 2px 0;">P.O. BOX 218-40222, OYUGIS</p>
+			<p style="font-size: 8pt; font-style: italic;">"The Sky is the Limit"</p>
+		</div>
+
+		<div class="report-title">OFFICIAL LEARNER'S PROGRESS REPORT</div>
+
+		<table class="info-table">
+			<tr>
+				<td width="50%">
+					<span class="label">NAME:</span> {{ student.first_name|upper }} {{ student.last_name|upper }}
+				</td>
+				<td>
+					<span class="label">ADM NO:</span> {{ student.admission_number }}
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<span class="label">GRADE:</span> {{ student.grade|upper }}
+				</td>
+				<td>
+					<span class="label">TERM:</span> {{ term }} | <span class="label">YEAR:</span> {{ year }}
+				</td>
+			</tr>
+		</table>
+
+		<table class="marks-table">
+			<thead>
+				<tr>
+					<th style="width: 40%;">Learning Area (Subject)</th>
+					<th class="center" style="width: 15%;">Score (%)</th>
+					<th class="center" style="width: 15%;">CBC Level</th>
+					<th style="width: 30%;">Learning Remarks</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for m in marks %}
+				<tr>
+					<td>{{ m.subject }}</td>
+					<td class="center">{{ m.score }}</td>
+					<td class="center">
+						<strong>{{ m.rubric.code }}</strong>
+					</td>
+					<td style="font-size: 8pt;">{{ m.rubric.comment }}</td>
+				</tr>
+				{% endfor %}
+
+				<!-- ONLY this row shows the "Out Of" total -->
+				<tr style="background-color: #f2f2f2; font-weight: bold;">
+					<td>TOTAL SCORE & MEAN GRADE</td>
+					<td class="center">
+						{{ total }} / {{ total_possible }}
+						<br>
+							<small style="font-size: 0.8em; color: #1565c0;">({{ average }}%)</small>
+						</td>
+					<td class="center">{{ overall.code }}</td>
+					<td style="font-size: 8pt;">Overall Performance</td>
+				</tr>
+			</tbody>
+		</table>
+
+		<div class="summary-box">
+			<p style="margin: 0 0 5px 0;">
+				<span class="label">OVERALL PERFORMANCE LEVEL:</span>
+				<span style="color: #1565c0; font-weight: bold;">{{ overall.label }} ({{ overall.code }})</span>
+			</p>
+			<p style="margin: 0;">
+				<span class="label">TEACHER'S COMMENT:</span>
+				{{ overall.comment }} ____________________________________________________
+			</p>
+		</div>
+
+		<table class="signature-row" cellspacing="15">
+			<tr>
+				<td>Class Teacher's Signature</td>
+				<td>Parent/Guardian's Signature</td>
+				<td>Principal's Signature & Stamp</td>
+			</tr>
+		</table>
+
+		<div class="footer-note">
+			This is an official document of Agawo Comprehensive School. Any alteration renders it invalid.
+			<br>Generated on: {% now "jS F Y" %}
+    </div>
+
+	</body>
+</html>

@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+    .teachers-container {
+        max-width: 1000px;
+        margin: 30px auto;
+        padding: 20px;
+        background: #ffffff;
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        box-shadow: 0 8px 22px rgba(0,0,0,0.05);
+    }
+
+    .teachers-title {
+        text-align: center;
+        font-size: 24px;
+        font-weight: 800;
+        color: var(--primary);
+        margin-bottom: 20px;
+    }
+
+    .teachers-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+    }
+
+    .teacher-card {
+        background: #f8fafc;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px;
+        text-align: center;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+        transition: 0.25s ease;
+    }
+
+    .teacher-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 16px rgba(0,0,0,0.07);
+    }
+
+    .teacher-photo {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: #dbeafe;
+        margin: 0 auto 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 32px;
+        color: #1d4ed8;
+    }
+
+    .teacher-name {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--primary);
+        margin-bottom: 6px;
+    }
+
+    .teacher-subject {
+        font-size: 13px;
+        color: var(--muted);
+        margin-bottom: 4px;
+    }
+
+    .teacher-contact {
+        font-size: 12px;
+        color: var(--text);
+    }
+</style>
+
+<div class="teachers-container">
+    <div class="teachers-title">Teachers Directory</div>
+
+    <div class="teachers-grid">
+        <!-- Example teacher card -->
+        <div class="teacher-card">
+            <div class="teacher-photo">👩‍🏫</div>
+            <div class="teacher-name">Jane Doe</div>
+            <div class="teacher-subject">Mathematics</div>
+            <div class="teacher-contact">jane.doe@example.com</div>
+        </div>
+
+        <div class="teacher-card">
+            <div class="teacher-photo">👨‍🏫</div>
+            <div class="teacher-name">John Smith</div>
+            <div class="teacher-subject">Science</div>
+            <div class="teacher-contact">john.smith@example.com</div>
+        </div>
+
+        <!-- Add more teacher cards dynamically -->
+        {% for teacher in teachers %}
+        <div class="teacher-card">
+            <div class="teacher-photo">👩‍🏫</div>
+            <div class="teacher-name">{{ teacher.name }}</div>
+            <div class="teacher-subject">{{ teacher.subject }}</div>
+            <div class="teacher-contact">{{ teacher.email }}</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}

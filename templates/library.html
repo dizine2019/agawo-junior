@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.library-wrap{
+    max-width:950px;
+    margin:auto;
+    padding:20px;
+}
+
+/* MAIN CARD */
+.library-card{
+    background:#ffffff;
+    border:1px solid #e5e7eb;
+    border-radius:18px;
+    padding:34px 28px;
+    box-shadow:0 10px 24px rgba(0,0,0,0.04);
+}
+
+/* TITLE */
+.library-title{
+    text-align:center;
+    font-size:28px;
+    font-weight:800;
+    color:#111827;
+    margin-bottom:8px;
+}
+
+.library-sub{
+    text-align:center;
+    color:#6b7280;
+    font-size:14px;
+    margin-bottom:28px;
+}
+
+/* RESOURCE BUTTONS */
+.resource-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:14px;
+    margin-bottom:28px;
+}
+
+.resource-btn{
+    text-decoration:none;
+    background:#f8fafc;
+    border:1px solid #e5e7eb;
+    border-radius:14px;
+    padding:18px 14px;
+    text-align:center;
+    color:#111827;
+    font-weight:700;
+    transition:0.25s ease;
+}
+
+.resource-btn:hover{
+    background:#eff6ff;
+    border-color:#2563eb;
+    color:#2563eb;
+    transform:translateY(-2px);
+}
+
+/* FORM AREA */
+.form-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:18px;
+    margin-bottom:24px;
+}
+
+.form-group label{
+    display:block;
+    font-size:13px;
+    font-weight:700;
+    color:#374151;
+    margin-bottom:8px;
+}
+
+.form-group select{
+    width:100%;
+    padding:12px 14px;
+    border:1px solid #d1d5db;
+    border-radius:10px;
+    font-size:14px;
+    background:#ffffff;
+    outline:none;
+}
+
+.form-group select:focus{
+    border-color:#2563eb;
+}
+
+/* ACTION BUTTON */
+.action-area{
+    text-align:center;
+}
+
+.open-btn{
+    display:inline-block;
+    background:#2563eb;
+    color:#ffffff;
+    text-decoration:none;
+    padding:13px 28px;
+    border-radius:12px;
+    font-size:15px;
+    font-weight:700;
+    transition:0.25s ease;
+}
+
+.open-btn:hover{
+    background:#1d4ed8;
+    transform:translateY(-2px);
+}
+
+/* MOBILE */
+@media(max-width:768px){
+
+    .resource-grid{
+        grid-template-columns:1fr;
+    }
+
+    .form-grid{
+        grid-template-columns:1fr;
+    }
+
+    .library-title{
+        font-size:22px;
+    }
+
+    .library-card{
+        padding:24px 18px;
+    }
+}
+</style>
+
+<div class="library-wrap">
+
+    <div class="library-card">
+
+        <div class="library-title">Digital Library</div>
+        <div class="library-sub">
+            Access books and teaching resources by category
+        </div>
+
+        <!-- RESOURCE TYPES -->
+        <div class="resource-grid">
+
+            <a href="#" class="resource-btn">📘 Course Books</a>
+            <a href="#" class="resource-btn">📖 Story Books</a>
+            <a href="#" class="resource-btn">📝 Schemes of Work</a>
+
+        </div>
+
+        <!-- FILTERS -->
+        <div class="form-grid">
+
+            <div class="form-group">
+                <label>Select Grade</label>
+                <select>
+                    <option>Grade 1</option>
+                    <option>Grade 2</option>
+                    <option>Grade 3</option>
+                    <option>Grade 4</option>
+                    <option>Grade 5</option>
+                    <option>Grade 6</option>
+                    <option>Grade 7</option>
+                    <option>Grade 8</option>
+                    <option>Grade 9</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Select Term</label>
+                <select>
+                    <option>Term 1</option>
+                    <option>Term 2</option>
+                    <option>Term 3</option>
+                </select>
+            </div>
+
+        </div>
+
+        <div class="action-area">
+            <a href="#" class="open-btn">Open Resource</a>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

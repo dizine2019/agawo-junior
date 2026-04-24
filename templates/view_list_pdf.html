@@ -1,0 +1,111 @@
+{% load custom_filters %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Ranking Report</title>
+    <style>
+        /* PDF Specific Settings */
+        @page {
+            size: a4 landscape;
+            margin: 1cm;
+        }
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            color: #333;
+            font-size: 10pt;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #1565c0;
+            padding-bottom: 10px;
+        }
+        .school-name {
+            font-size: 20pt;
+            color: #1565c0;
+            font-weight: bold;
+            margin: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th {
+            background-color: #1565c0;
+            color: white;
+            padding: 8px;
+            text-transform: uppercase;
+            font-size: 9pt;
+        }
+        td {
+            border: 1px solid #ddd;
+            padding: 6px;
+            text-align: center;
+        }
+        .text-left {
+            text-align: left;
+        }
+        .top-rank {
+            background-color: #e3f2fd;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: right;
+            font-size: 8pt;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <p class="school-name">AGAWO JUNIOR SECONDARY SCHOOL</p>
+        <h2>Performance Ranking Report</h2>
+        <p><strong>Grade:</strong> {{ grade }} | <strong>Term:</strong> {{ term }} | <strong>Year:</strong> {{ year }}</p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 40px;">Rank</th>
+                <th style="width: 80px;">Adm No.</th>
+                <th class="text-left">Student Name</th>
+                {% for subject in subjects %}
+                    <th>{{ subject }}</th>
+                {% endfor %}
+                <th style="background-color: #0d47a1;">Total</th>
+                <th style="background-color: #0d47a1;">Avg</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in students %}
+                <tr class="{% if student.rank <= 3 %}top-rank{% endif %}">
+                    <td>{{ student.rank }}</td>
+                    <td>{{ student.admission_number }}</td>
+                    <td class="text-left">{{ student.full_name }}</td>
+                    
+                    {% for subject in subjects %}
+                        <td>{{ student.marks|get_item:subject|default:"-" }}</td>
+                    {% endfor %}
+                    
+                    <td style="font-weight: bold; color: #1565c0;">{{ student.total }}</td>
+                    <td>{{ student.average }}%</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="{{ subjects|length|add:5 }}">No data found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <p>Report Generated on: {% now "jS F Y H:i" %}</p>
+        <p>Principal's Signature: ___________________________</p>
+    </div>
+
+</body>
+</html>

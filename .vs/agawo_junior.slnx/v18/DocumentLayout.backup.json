@@ -1,0 +1,324 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\Hp\\agawo_junior\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Hp\\agawo_junior\\templates\\add_mark.html||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:templates\\add_mark.html||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Hp\\agawo_junior\\core\\views.py||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:core\\views.py||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Hp\\agawo_junior\\core\\models.py||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:core\\models.py||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Hp\\agawo_junior\\templates\\teachers.html||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:templates\\teachers.html||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Hp\\agawo_junior\\templates\\dashboard.html||{FA3CD31E-987B-443A-9B81-186104E8DAC1}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:templates\\dashboard.html||{FA3CD31E-987B-443A-9B81-186104E8DAC1}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Hp\\agawo_junior\\core\\urls.py||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:core\\urls.py||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Hp\\agawo_junior\\agawo_junior\\settings.py||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:agawo_junior\\settings.py||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Hp\\agawo_junior\\templates\\course_books.html||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:templates\\course_books.html||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Hp\\agawo_junior\\templates\\library.html||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:templates\\library.html||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Hp\\agawo_junior\\templates\\schemes.html||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:templates\\schemes.html||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Hp\\agawo_junior\\templates\\story_books.html||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:templates\\story_books.html||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Hp\\agawo_junior\\templates\\base.html||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:templates\\base.html||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Hp\\agawo_junior\\templates\\marks_entry.html||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:templates\\marks_entry.html||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Hp\\agawo_junior\\templates\\report_card_pdf.html||{FA3CD31E-987B-443A-9B81-186104E8DAC1}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:templates\\report_card_pdf.html||{FA3CD31E-987B-443A-9B81-186104E8DAC1}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Hp\\agawo_junior\\templates\\view_list_pdf.html||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:templates\\view_list_pdf.html||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Hp\\agawo_junior\\templates\\view_list.html||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:templates\\view_list.html||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Hp\\agawo_junior\\templates\\grade_students.html||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:templates\\grade_students.html||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Hp\\agawo_junior\\agawo_junior\\urls.py||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:agawo_junior\\urls.py||{8B382828-6202-11D1-8870-0000F87579D2}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 4,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "teachers.html",
+              "DocumentMoniker": "C:\\Users\\Hp\\agawo_junior\\templates\\teachers.html",
+              "RelativeDocumentMoniker": "templates\\teachers.html",
+              "ToolTip": "C:\\Users\\Hp\\agawo_junior\\templates\\teachers.html",
+              "RelativeToolTip": "templates\\teachers.html",
+              "ViewState": "AgIAAE8AAAAAAAAAAAAcwGsAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-04-24T19:56:33.35Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "views.py",
+              "DocumentMoniker": "C:\\Users\\Hp\\agawo_junior\\core\\views.py",
+              "RelativeDocumentMoniker": "core\\views.py",
+              "ToolTip": "C:\\Users\\Hp\\agawo_junior\\core\\views.py",
+              "RelativeToolTip": "core\\views.py",
+              "ViewState": "AgIAADMBAAAAAAAAAAAswE4BAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2026-04-17T21:08:31.505Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "dashboard.html",
+              "DocumentMoniker": "C:\\Users\\Hp\\agawo_junior\\templates\\dashboard.html",
+              "RelativeDocumentMoniker": "templates\\dashboard.html",
+              "ToolTip": "C:\\Users\\Hp\\agawo_junior\\templates\\dashboard.html",
+              "RelativeToolTip": "templates\\dashboard.html",
+              "ViewState": "AgIAABoBAAAAAAAAAAAUwCkBAAAOAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-04-18T06:53:19.522Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "models.py",
+              "DocumentMoniker": "C:\\Users\\Hp\\agawo_junior\\core\\models.py",
+              "RelativeDocumentMoniker": "core\\models.py",
+              "ToolTip": "C:\\Users\\Hp\\agawo_junior\\core\\models.py",
+              "RelativeToolTip": "core\\models.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACwAAAAsAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2026-04-17T21:22:34.557Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "add_mark.html",
+              "DocumentMoniker": "C:\\Users\\Hp\\agawo_junior\\templates\\add_mark.html",
+              "RelativeDocumentMoniker": "templates\\add_mark.html",
+              "ToolTip": "C:\\Users\\Hp\\agawo_junior\\templates\\add_mark.html",
+              "RelativeToolTip": "templates\\add_mark.html",
+              "ViewState": "AgIAAEgBAAAAAAAAAAAcwGQBAAAOAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-04-18T06:25:47.379Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "settings.py",
+              "DocumentMoniker": "C:\\Users\\Hp\\agawo_junior\\agawo_junior\\settings.py",
+              "RelativeDocumentMoniker": "agawo_junior\\settings.py",
+              "ToolTip": "C:\\Users\\Hp\\agawo_junior\\agawo_junior\\settings.py",
+              "RelativeToolTip": "agawo_junior\\settings.py",
+              "ViewState": "AgIAAGMAAAAAAAAAAAAowG4AAAAXAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2026-04-17T21:39:04.281Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "urls.py",
+              "DocumentMoniker": "C:\\Users\\Hp\\agawo_junior\\core\\urls.py",
+              "RelativeDocumentMoniker": "core\\urls.py",
+              "ToolTip": "C:\\Users\\Hp\\agawo_junior\\core\\urls.py",
+              "RelativeToolTip": "core\\urls.py",
+              "ViewState": "AgIAACoAAAAAAAAAAAAswDkAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2026-04-17T21:08:45.015Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "course_books.html",
+              "DocumentMoniker": "C:\\Users\\Hp\\agawo_junior\\templates\\course_books.html",
+              "RelativeDocumentMoniker": "templates\\course_books.html",
+              "ToolTip": "C:\\Users\\Hp\\agawo_junior\\templates\\course_books.html",
+              "RelativeToolTip": "templates\\course_books.html",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAAOAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-04-24T06:26:54.278Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "library.html",
+              "DocumentMoniker": "C:\\Users\\Hp\\agawo_junior\\templates\\library.html",
+              "RelativeDocumentMoniker": "templates\\library.html",
+              "ToolTip": "C:\\Users\\Hp\\agawo_junior\\templates\\library.html",
+              "RelativeToolTip": "templates\\library.html",
+              "ViewState": "AgIAAIMAAAAAAAAAAAAcwJUAAAAwAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-04-24T06:20:10.066Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "schemes.html",
+              "DocumentMoniker": "C:\\Users\\Hp\\agawo_junior\\templates\\schemes.html",
+              "RelativeDocumentMoniker": "templates\\schemes.html",
+              "ToolTip": "C:\\Users\\Hp\\agawo_junior\\templates\\schemes.html",
+              "RelativeToolTip": "templates\\schemes.html",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-04-24T06:27:59.845Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "story_books.html",
+              "DocumentMoniker": "C:\\Users\\Hp\\agawo_junior\\templates\\story_books.html",
+              "RelativeDocumentMoniker": "templates\\story_books.html",
+              "ToolTip": "C:\\Users\\Hp\\agawo_junior\\templates\\story_books.html",
+              "RelativeToolTip": "templates\\story_books.html",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-04-24T06:27:39.599Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "report_card_pdf.html",
+              "DocumentMoniker": "C:\\Users\\Hp\\agawo_junior\\templates\\report_card_pdf.html",
+              "RelativeDocumentMoniker": "templates\\report_card_pdf.html",
+              "ToolTip": "C:\\Users\\Hp\\agawo_junior\\templates\\report_card_pdf.html",
+              "RelativeToolTip": "templates\\report_card_pdf.html",
+              "ViewState": "AgIAAFcAAAAAAAAAAAAEwF4AAABHAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-04-23T20:29:13.735Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "marks_entry.html",
+              "DocumentMoniker": "C:\\Users\\Hp\\agawo_junior\\templates\\marks_entry.html",
+              "RelativeDocumentMoniker": "templates\\marks_entry.html",
+              "ToolTip": "C:\\Users\\Hp\\agawo_junior\\templates\\marks_entry.html",
+              "RelativeToolTip": "templates\\marks_entry.html",
+              "ViewState": "AgIAAEcAAAAAAAAAAAAcwGMAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-04-20T01:58:24.204Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "base.html",
+              "DocumentMoniker": "C:\\Users\\Hp\\agawo_junior\\templates\\base.html",
+              "RelativeDocumentMoniker": "templates\\base.html",
+              "ToolTip": "C:\\Users\\Hp\\agawo_junior\\templates\\base.html",
+              "RelativeToolTip": "templates\\base.html",
+              "ViewState": "AgIAAIcAAAAAAAAAAAAcwKMAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-04-18T06:40:38.334Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
+              "Title": "view_list_pdf.html",
+              "DocumentMoniker": "C:\\Users\\Hp\\agawo_junior\\templates\\view_list_pdf.html",
+              "RelativeDocumentMoniker": "templates\\view_list_pdf.html",
+              "ToolTip": "C:\\Users\\Hp\\agawo_junior\\templates\\view_list_pdf.html",
+              "RelativeToolTip": "templates\\view_list_pdf.html",
+              "ViewState": "AgIAAFMAAAAAAAAAAAAcwG8AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-04-23T20:46:48.024Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
+              "Title": "view_list.html",
+              "DocumentMoniker": "C:\\Users\\Hp\\agawo_junior\\templates\\view_list.html",
+              "RelativeDocumentMoniker": "templates\\view_list.html",
+              "ToolTip": "C:\\Users\\Hp\\agawo_junior\\templates\\view_list.html",
+              "RelativeToolTip": "templates\\view_list.html",
+              "ViewState": "AgIAALIAAAAAAAAAAAAUwL4AAAAXAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-04-23T20:30:00.841Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 17,
+              "Title": "urls.py",
+              "DocumentMoniker": "C:\\Users\\Hp\\agawo_junior\\agawo_junior\\urls.py",
+              "RelativeDocumentMoniker": "agawo_junior\\urls.py",
+              "ToolTip": "C:\\Users\\Hp\\agawo_junior\\agawo_junior\\urls.py",
+              "RelativeToolTip": "agawo_junior\\urls.py",
+              "ViewState": "AgIAAAIAAAAAAAAAAAAswB0AAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2026-04-17T21:16:18.206Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 16,
+              "Title": "grade_students.html",
+              "DocumentMoniker": "C:\\Users\\Hp\\agawo_junior\\templates\\grade_students.html",
+              "RelativeDocumentMoniker": "templates\\grade_students.html",
+              "ToolTip": "C:\\Users\\Hp\\agawo_junior\\templates\\grade_students.html",
+              "RelativeToolTip": "templates\\grade_students.html",
+              "ViewState": "AgIAAG8AAAAAAAAAAAAcwIsAAAAHAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2026-04-17T21:09:32.06Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

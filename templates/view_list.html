@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block content %}
+<style>
+    /* 1. GLOBAL TABLE STYLING (BORDERS) */
+    table {
+        width: 100%;
+        border-collapse: collapse !important;
+        background: white;
+        table-layout: auto;
+    }
+
+    th, td {
+        border: 1px solid #000000 !important; /* Visible Black Borders */
+        padding: 6px 4px;
+        text-align: center;
+        font-size: 0.85em;
+    }
+
+    /* 2. ONE-LINE NAME CONFIGURATION */
+    .name-cell {
+        text-align: left !important;
+        padding-left: 10px !important;
+        white-space: nowrap !important; /* Forces name to stay on one line */
+        font-weight: bold;
+    }
+
+    /* 3. PDF SPECIFIC CONFIGURATION (LANDSCAPE & HEADING) */
+    {% if is_pdf %}
+    @page {
+        size: A4 landscape;
+        margin: 0.8cm;
+    }
+    .pdf-only-header {
+        display: block !important;
+        text-align: center;
+        margin-bottom: 15px;
+    }
+    .table-scroll-area {
+        overflow: visible !important; 
+    }
+    body { font-family: sans-serif; }
+    {% else %}
+    /* WEB VIEW STYLING */
+    .pdf-only-header {
+        display: none; /* Hidden on screen */
+    }
+    .table-scroll-area {
+        width: 100%;
+        overflow-x: auto;
+        overflow-y: auto;
+        max-height: 75vh;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+    {% endif %}
+
+    /* Header Styling */
+    thead th {
+        background-color: #1565c0;
+        color: white;
+        text-transform: UPPERCASE;
+        white-space: nowrap;
+        {% if not is_pdf %}
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        {% endif %}
+    }
+
+    .rubric-tag {
+        font-weight: bold;
+        font-size: 0.75em;
+        display: block;
+        color: #1565c0;
+    }
+
+    .top-row { background-color: #f1f7ff; }
+
+    /* Action Button Styling */
+    .btn-view {
+        padding: 4px 8px;
+        background: #2e7d32;
+        color: white;
+        text-decoration: none;
+        border-radius: 3px;
+        font-size: 0.75em;
+        font-weight: bold;
+        display: inline-block;
+    }
+    .btn-view:hover { background: #1b5e20; }
+</style>
+
+<div class="container-results" style="padding:10px;">
+    
+    <!-- PDF DOCUMENT HEADING -->
+    <div class="pdf-only-header">
+        <h1 style="margin:0; font-size: 22pt; text-transform: uppercase;">AGAWO COMPREHENSIVE SCHOOL</h1>
+        <p style="margin:2px 0; font-size: 11pt; font-weight: bold;">P.O. BOX 218-40222, OYUGIS</p>
+        <h3 style="margin:10px 0 5px 0; border-top: 1.5px solid #000; padding-top: 8px; text-transform: uppercase;">
+            Official Assessment Result Sheet
+        </h3>
+        <p style="margin:0; font-size: 10pt;">
+            <strong>GRADE:</strong> {{ selected_grade|upper }} | 
+            <strong>TERM:</strong> {{ selected_term }} | 
+            <strong>YEAR:</strong> {{ selected_year }}
+        </p>
+    </div>
+
+    {% if not is_pdf %}
+    <h1 style="text-align:center; color:#1565c0; text-transform: UPPERCASE;">Assessment Ranking List</h1>
+
+    <!-- Web Filters -->
+    <div style="background:#f8f9fa; padding:15px; border-radius:8px; margin-bottom:20px; text-align:center; border: 1px solid #ddd;">
+        <form method="get">
+            <strong>GRADE:</strong> 
+            <select name="grade" style="padding:6px;">
+                {% for g in grades %}
+                    <option value="{{ g }}" {% if g == selected_grade %}selected{% endif %}>{{ g|upper }}</option>
+                {% endfor %}
+            </select>
+            <strong>TERM:</strong> 
+            <select name="term" style="padding:6px;">
+                {% for t in terms %}
+                    <option value="{{ t }}" {% if t == selected_term %}selected{% endif %}>TERM {{ t }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" style="padding:7px 20px; background:#1565c0; color:white; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">FILTER & RANK</button>
+        </form>
+    </div>
+    {% endif %}
+
+    <!-- SCROLLABLE TABLE AREA -->
+    <div class="table-scroll-area">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 40px;">RANK</th>
+                    <th class="name-cell">STUDENT NAME</th>
+                    {% for subject in subjects %}
+                        <th>{{ subject }}</th>
+                    {% endfor %}
+                    <th style="background:#0d47a1;">TOTAL</th>
+                    <th style="background:#0d47a1;">RUBRIC</th>
+                    {% if not is_pdf %}
+                        <th style="background:#2e7d32;">REPORT CARD</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in performance_data %}
+                <tr class="{% if forloop.counter <= 3 and not is_pdf %}top-row{% endif %}">
+                    <td><strong>{{ forloop.counter }}</strong></td>
+                    <td class="name-cell">{{ row.student.first_name|upper }} {{ row.student.last_name|upper }}</td>
+                    
+                    {% for item in row.subject_marks %}
+                        <td>
+                            {% if item.score is not None %}
+                                {{ item.score }}
+                                <span class="rubric-tag">{{ item.rubric }}</span>
+                            {% else %}
+                                <span style="color:#ccc;">-</span>
+                            {% endif %}
+                        </td>
+                    {% endfor %}
+                    
+                    <td style="font-weight:bold; color:#1565c0;">{{ row.total }}</td>
+                    <td style="font-weight:bold;">
+                        {{ row.overall_rubric }}
+                        {% if is_pdf %}<br><small style="font-size: 0.6em; font-weight: normal;">{{ row.rubric_label }}</small>{% endif %}
+                    </td>
+                    {% if not is_pdf %}
+                    <td>
+                        <a href="{% url 'report_card' row.student.id %}?term={{ selected_term }}&year={{ selected_year }}" class="btn-view" target="_blank">
+                           📄 VIEW PDF
+                        </a>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="{{ subjects|length|add:5 }}" style="padding:50px; font-style: italic; color: #888;">
+                        No assessment data found for selected criteria.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    {% if not is_pdf %}
+    <div style="margin-top:20px; display: flex; justify-content: space-between; align-items: center;">
+        <small style="color: #666;">* Sorted by Total Marks. Overall Rubric based on average performance.</small>
+        <div style="display: flex; gap: 10px;">
+            <a href="{% url 'download_view_list_pdf' %}?grade={{ selected_grade }}&term={{ selected_term }}&year={{ selected_year }}" 
+               style="padding:10px 25px; background:#c62828; color:white; text-decoration:none; border-radius:4px; font-weight: bold; font-size: 0.9em;">
+               📥 DOWNLOAD RANKING SHEET
+            </a>
+            <button onclick="window.print()" style="padding:10px 25px; background:#333; color:white; border:none; border-radius:4px; font-weight: bold; font-size: 0.9em; cursor:pointer;">
+               🖨️ PRINT
+            </button>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container" style="max-width: 600px; margin: 30px auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+    <h2 style="text-align: center; color: #f39c12;">Edit Student Profile</h2>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <div style="flex: 1;">
+                <label>First Name:</label>
+                <input type="text" name="first_name" value="{{ student.first_name }}" required style="width: 100%; padding: 8px;">
+            </div>
+            <div style="flex: 1;">
+                <label>Last Name:</label>
+                <input type="text" name="last_name" value="{{ student.last_name }}" required style="width: 100%; padding: 8px;">
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <div style="flex: 1;">
+                <label>Admission No:</label>
+                <input type="text" name="admission_number" value="{{ student.admission_number }}" required style="width: 100%; padding: 8px;">
+            </div>
+            <div style="flex: 1;">
+                <label>Assessment No:</label>
+                <input type="text" name="assessment_number" value="{{ student.assessment_number|default:'' }}" style="width: 100%; padding: 8px;">
+            </div>
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <label>Parent Name:</label>
+            <input type="text" name="parent_name" value="{{ student.parent_name|default:'' }}" style="width: 100%; padding: 8px;">
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <div style="flex: 1;">
+                <label>Parent Phone:</label>
+                <input type="text" name="parent_phone" value="{{ student.parent_phone|default:'' }}" style="width: 100%; padding: 8px;">
+            </div>
+            <div style="flex: 1;">
+                <label>Year of Birth:</label>
+                <input type="number" name="year_of_birth" value="{{ student.year_of_birth|default:'' }}" style="width: 100%; padding: 8px;">
+            </div>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label>Grade:</label>
+            <select name="grade" style="width: 100%; padding: 8px;">
+                {% for g in grades %}
+                    <option value="{{ g }}" {% if g == student.grade %}selected{% endif %}>{{ g }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <button type="submit" style="width: 100%; padding: 12px; background: #f39c12; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">
+            Update Student Records
+        </button>
+    </form>
+</div>
+{% endblock %}
