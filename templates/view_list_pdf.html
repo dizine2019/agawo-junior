@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Ranking Report</title>
+    <style>
+        /* PDF Layout Settings */
+        @page {
+            size: A4 landscape;
+            margin: 1cm;
+        }
+
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            color: #333;
+            font-size: 9pt;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #1565c0;
+            padding-bottom: 5px;
+        }
+
+        .school-name {
+            font-size: 18pt;
+            color: #1565c0;
+            font-weight: bold;
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th {
+            background-color: #1565c0;
+            color: white;
+            padding: 6px;
+            text-transform: uppercase;
+            font-size: 8pt;
+            border: 1px solid #0d47a1;
+        }
+
+        td {
+            border: 1px solid #cccccc;
+            padding: 5px;
+            text-align: center;
+        }
+
+        .text-left {
+            text-align: left;
+        }
+
+        /* Highlight Top 3 Students */
+        .top-rank {
+            background-color: #e3f2fd;
+        }
+
+        .total-cell {
+            font-weight: bold;
+            color: #1565c0;
+            background-color: #f5f5f5;
+        }
+
+        .rubric-small {
+            display: block;
+            font-size: 7pt;
+            font-weight: bold;
+            color: #1565c0;
+            margin-top: 1px;
+        }
+
+        .footer {
+            margin-top: 25px;
+            font-size: 8pt;
+        }
+
+        .signature-box {
+            margin-top: 20px;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="header">
+    <p class="school-name">AGAWO JUNIOR SECONDARY SCHOOL</p>
+    <h2 style="margin:5px 0;">Performance Ranking Report</h2>
+    <p>
+        <strong>Grade:</strong> {{ grade }} | 
+        <strong>Term:</strong> {{ term }} | 
+        <strong>Year:</strong> {{ year }}
+    </p>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th style="width: 30px;">Pos</th>
+            <th style="width: 70px;">Adm No.</th>
+            <th class="text-left" style="width: 150px;">Student Name</th>
+
+            {% for subject in subjects %}
+                <th>{{ subject }}</th>
+            {% endfor %}
+
+            <th style="width: 50px;">Total</th>
+            <th style="width: 50px;">Grade</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for entry in students %}
+        <tr class="{% if entry.rank <= 3 %}top-rank{% endif %}">
+            
+            <!-- Rank Attribute -->
+            <td style="font-weight:bold;">{{ entry.rank }}</td>
+
+            <!-- Admission Attribute -->
+            <td>{{ entry.admission_number }}</td>
+
+            <!-- Name Attribute (Concatenated) -->
+            <td class="text-left">
+                {{ entry.student.first_name }} {{ entry.student.last_name }}
+            </td>
+
+            <!-- Subject Marks Loop -->
+            {% for item in entry.subject_marks %}
+                <td>
+                    {% if item.score is not None %}
+                        {{ item.score }}
+                        <span class="rubric-small">{{ item.rubric }}</span>
+                    {% else %}
+                        <span style="color:#999;">-</span>
+                    {% endif %}
+                </td>
+            {% endfor %}
+
+            <!-- Total Score Attribute -->
+            <td class="total-cell">
+                {{ entry.total }}
+            </td>
+
+            <!-- Overall Rubric Attribute -->
+            <td style="font-weight:bold; background-color:#e8f5e9; color:#2e7d32;">
+                {{ entry.total_rubrics }}
+            </td>
+
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="20">No student records found for this selection.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="footer">
+    <table class="signature-box" style="border:none;">
+        <tr style="border:none;">
+            <td style="text-align:left; border:none; width:50%;">
+                Report Generated: {% now "jS F Y" %}
+            </td>
+            <td style="text-align:right; border:none; width:50%;">
+                Principal's Signature: ___________________________
+            </td>
+        </tr>
+    </table>
+</div>
+
+</body>
+</html>

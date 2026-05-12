@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+    .portal-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 70vh;
+        background: #f4f7f6;
+    }
+
+    .compact-card {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        text-align: center;
+        max-width: 700px;
+        width: 100%;
+    }
+
+    h1 { color: #1565c0; font-size: 1.6em; margin-bottom: 5px; font-weight: 700; }
+    p { color: #777; font-size: 0.95em; margin-bottom: 30px; }
+
+    /* COMPACT BUTTON ROW */
+    .button-row {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-bottom: 25px;
+    }
+
+    .btn-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.9em;
+        color: white;
+        transition: 0.2s;
+        min-width: 160px;
+        justify-content: center;
+    }
+
+    .btn-item:hover { transform: translateY(-3px); opacity: 0.9; color: white; }
+
+    .blue { background: #1565c0; }
+    .green { background: #27ae60; }
+    .grey { background: #455a64; }
+
+    /* SLIM STATUS BAR */
+    .status-bar {
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+        font-size: 0.85em;
+        color: #888;
+    }
+    .badge {
+        background: #e3f2fd;
+        color: #1565c0;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-weight: bold;
+    }
+</style>
+
+<div class="portal-wrapper">
+    <div class="compact-card">
+        <h1>Assessment Portal</h1>
+        <p>Select an action below to manage learner records.</p>
+
+        <div class="button-row">
+            <!-- ENTER MARKS -->
+            <a href="{% url 'add_mark' %}" class="btn-item green">
+                <span>📝</span> Enter Marks
+            </a>
+
+            <!-- VIEW RANK LIST -->
+            <a href="{% url 'view_list' %}" class="btn-item blue">
+                <span>📊</span> Rank List
+            </a>
+
+            <!-- DASHBOARD -->
+            <a href="{% url 'dashboard' %}" class="btn-item grey">
+                <span>🏠</span> Dashboard
+            </a>
+        </div>
+
+        <div class="status-bar">
+            Active Session: <span class="badge">Term 1, 2026</span>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

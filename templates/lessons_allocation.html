@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- Modern Font Loading -->
+<link href="https://googleapis.com" rel="stylesheet">
+
+<div class="container">
+    <div class="header-area">
+        <h1>Agawo Junior School</h1>
+        <h2>Lesson Allocation Portal</h2>
+        <p>Assigning CBC Subjects & Workloads for 2026</p>
+    </div>
+
+    <!-- 1. Allocation Form Section -->
+    <div class="section">
+        <div class="section-header">
+            <h3>1. Create Teacher Load</h3>
+            <a href="{% url 'teachers_registry' %}" class="registry-link">Manage Staff Registry →</a>
+        </div>
+
+        <div class="form-group">
+            <label>Select Teacher</label>
+            <input list="teacherList" id="teacherName" placeholder="Search registered teacher..." onchange="showCurrentWorkload()">
+            <datalist id="teacherList"></datalist>
+            <div id="workloadStatus" class="workload-info"></div>
+        </div>
+
+        <div class="batch-builder">
+            <label>Subject, Grade & Lessons</label>
+            <div class="allocation-row">
+                <!-- UPDATED: Values now match SUBJECT_CHOICES in models.py -->
+                <select id="subject">
+                    <optgroup label="Junior School (Grade 7-9)">
+                        <option value="Mathematics">Mathematics</option>
+                        <option value="English">English</option>
+                        <option value="Kiswahili">Kiswahili</option>
+                        <option value="Integrated Science">Integrated Science</option>
+                        <option value="Social Studies">Social Studies</option>
+                        <option value="Religious Education">Religious Education</option>
+                        <option value="Pre-Technical Studies">Pre-Technical Studies</option>
+                        <option value="Health Education">Health Education</option>
+                        <option value="Creative Arts & Sports">Creative Arts & Sports</option>
+                        <option value="Agriculture & Nutrition">Agriculture & Nutrition</option>
+                    </optgroup>
+                </select>
+
+                <!-- UPDATED: Use a select for Grade to match GRADE_CHOICES -->
+                <select id="grade">
+                    <option value="">Select Grade</option>
+                    <option value="Grade 7">Grade 7</option>
+                    <option value="Grade 8">Grade 8</option>
+                    <option value="Grade 9">Grade 9</option>
+                </select>
+
+                <input type="number" id="singles" placeholder="S" title="Single Lessons" min="0">
+                <input type="number" id="doubles" placeholder="D" title="Double Lessons" min="0">
+                <button type="button" class="btn-add-p" onclick="addSubjectToBatch()">+</button>
+            </div>
+            <ul id="batchList"></ul>
+        </div>
+        <button type="button" class="btn-save-all" onclick="saveWholeBatch()">Finalise & Save All for this Teacher</button>
+    </div>
+
+    <!-- 2. Consolidated Master Allocation Table -->
+    <div class="section">
+        <h3>2. Master Allocation List (Agawo School)</h3>
+        <div class="table-responsive">
+            <table id="masterTable">
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">TEACHER</th>
+                        <th style="width: 60%;">ALLOCATED SUBJECTS & GRADES</th>
+                        <th style="width: 15%; text-align: right;">ACTION</th>
+                    </tr>
+                </thead>
+                <tbody id="draftBody">
+                    <!-- Content loaded by JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <button class="btn-gen" onclick="proceedToGenerator()">Generate Unique Timetables →</button>
+</div>
+
+<style>
+    /* ... (Keep your existing styles here) ... */
+    .registry-link { font-size: 0.85rem; color: var(--primary); text-decoration: none; font-weight: 600; }
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+</style>
+
+<script>
+    /* 
+       IMPORTANT: Ensure your saveWholeBatch() function sends these 
+       exact strings (e.g. "Mathematics") to your Django backend.
+    */
+    
+    // ... rest of your JavaScript logic ...
+</script>
+
+{% endblock %}

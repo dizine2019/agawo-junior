@@ -1,0 +1,363 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.library-wrap{
+    max-width:1100px;
+    margin:auto;
+    padding:20px;
+    font-family:Inter, sans-serif;
+}
+
+.library-title{
+    text-align:center;
+    font-size:28px;
+    font-weight:800;
+}
+
+.library-sub{
+    text-align:center;
+    color:#6b7280;
+    margin-bottom:20px;
+}
+
+.stats-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:12px;
+    margin-bottom:20px;
+}
+
+.stat-box{
+    background:#fff;
+    border:1px solid #e5e7eb;
+    padding:15px;
+    border-radius:12px;
+    text-align:center;
+}
+
+.stat-box h3{
+    color:#2563eb;
+    margin:0;
+}
+
+.library-card{
+    background:#fff;
+    border:1px solid #e5e7eb;
+    padding:25px;
+    border-radius:16px;
+}
+
+.form-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+    gap:15px;
+    margin-bottom:20px;
+}
+
+.form-group label{
+    font-size:13px;
+    font-weight:600;
+    display:block;
+    margin-bottom:6px;
+}
+
+.form-group input,
+.form-group select{
+    width:100%;
+    padding:10px;
+    border-radius:10px;
+    border:1px solid #d1d5db;
+    background:#f9fafb;
+}
+
+.add-btn{
+    width:100%;
+    padding:11px;
+    background:#2563eb;
+    color:white;
+    border:none;
+    border-radius:10px;
+    font-weight:600;
+    cursor:pointer;
+}
+
+.add-btn:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:10px;
+}
+
+th{
+    background:#f9fafb;
+    padding:12px;
+    text-align:left;
+}
+
+td{
+    padding:12px;
+    border-bottom:1px solid #eee;
+}
+
+.status{
+    padding:4px 10px;
+    border-radius:20px;
+    font-size:12px;
+}
+
+.status.borrowed{background:#fef3c7;color:#92400e;}
+.status.returned{background:#d1fae5;color:#065f46;}
+.status.overdue{background:#fee2e2;color:#991b1b;}
+
+.btn{
+    padding:6px 10px;
+    border:none;
+    border-radius:6px;
+    font-size:12px;
+    cursor:pointer;
+}
+
+.return{
+    background:#10b981;
+    color:white;
+}
+</style>
+
+<div class="library-wrap">
+
+<div class="library-title">📚 Library System</div>
+<div class="library-sub">Borrow & Return Register</div>
+
+<!-- STATS -->
+<div class="stats-grid">
+    <div class="stat-box"><h3 id="total">0</h3><p>Total</p></div>
+    <div class="stat-box"><h3 id="borrowed">0</h3><p>Borrowed</p></div>
+    <div class="stat-box"><h3 id="returned">0</h3><p>Returned</p></div>
+    <div class="stat-box"><h3 id="overdue">0</h3><p>Overdue</p></div>
+</div>
+
+<div class="library-card">
+
+<!-- FORM -->
+<div class="form-grid">
+
+    <div class="form-group">
+        <label>Member Type</label>
+        <select id="memberType">
+            <option value="Student">Student</option>
+            <option value="Teacher">Teacher</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>Member Name</label>
+        <input type="text" id="memberName" placeholder="Enter full name">
+    </div>
+
+    <div class="form-group">
+        <label>Book Title</label>
+        <input type="text" id="bookName" placeholder="Enter book name">
+    </div>
+
+    <div class="form-group">
+        <label>Copies</label>
+        <input type="number" id="copies" value="1" min="1">
+    </div>
+
+    <div class="form-group">
+        <label>Due Date</label>
+        <input type="date" id="dueDate">
+    </div>
+
+    <div class="form-group">
+        <button id="borrowBtn" class="add-btn" onclick="borrowBook()">Borrow Book</button>
+    </div>
+
+</div>
+
+<!-- TABLE -->
+<table>
+<thead>
+<tr>
+<th>Member</th>
+<th>Type</th>
+<th>Book</th>
+<th>Qty</th>
+<th>Status</th>
+<th>Action</th>
+</tr>
+</thead>
+
+<tbody id="tableBody"></tbody>
+</table>
+
+</div>
+</div>
+
+<script>
+// ================= DATA LOADING =================
+let records = [];
+try {
+    const rawData = '{{ records|escapejs }}';
+    records = JSON.parse(rawData || '[]');
+} catch (e) {
+    console.error("Critical: Could not parse records", e);
+}
+
+// Default date to today
+document.getElementById("dueDate").valueAsDate = new Date();
+
+// ================= BORROW BOOK =================
+async function borrowBook() {
+    const btn = document.getElementById("borrowBtn");
+    const payload = {
+        action: "borrow",
+        member_name: document.getElementById("memberName").value.trim(),
+        member_type: document.getElementById("memberType").value,
+        book_name: document.getElementById("bookName").value.trim(),
+        copies: document.getElementById("copies").value,
+        due_date: document.getElementById("dueDate").value
+    };
+
+    if (!payload.member_name || !payload.book_name || !payload.due_date) {
+        alert("Please fill in all fields.");
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerText = "Saving...";
+
+    try {
+        const res = await fetch("/library/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCookie("csrftoken"),
+                "X-Requested-With": "XMLHttpRequest"
+            },
+            credentials: 'same-origin', // This keeps you logged in
+            body: JSON.stringify(payload)
+        });
+
+        // Detect if Django is redirecting to the login page
+        if (res.redirected && res.url.includes('login')) {
+            alert("Session expired. Please log in again.");
+            window.location.href = res.url;
+            return;
+        }
+
+        const contentType = res.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+            throw new Error("Server returned HTML. Ensure you are logged in.");
+        }
+
+        const result = await res.json();
+
+        if (res.ok) {
+            alert("Book borrowed successfully!");
+            location.reload();
+        } else {
+            alert(result.error || "Borrow failed");
+        }
+
+    } catch (err) {
+        alert(err.message);
+        console.error("Error Detail:", err);
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Borrow Book";
+    }
+}
+
+// ================= RETURN BOOK =================
+async function returnBook(id) {
+    if(!confirm("Mark as returned?")) return;
+
+    try {
+        const res = await fetch("/library/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCookie("csrftoken"),
+                "X-Requested-With": "XMLHttpRequest"
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({ action: "return", record_id: id })
+        });
+
+        const result = await res.json();
+        if (res.ok) {
+            location.reload();
+        } else {
+            alert(result.error || "Update failed");
+        }
+    } catch (err) {
+        alert("Update failed. Please refresh.");
+    }
+}
+
+// ================= CSRF HELPER =================
+function getCookie(name){
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// ================= RENDER TABLE =================
+function renderTable(){
+    let html="";
+    let b=0, r=0, o=0;
+
+    if (!records || records.length === 0) {
+        document.getElementById("tableBody").innerHTML = '<tr><td colspan="6" style="text-align:center;">No records found</td></tr>';
+        return;
+    }
+
+    records.forEach(rw=>{
+        let st = rw.status ? rw.status.toLowerCase() : 'borrowed';
+
+        if(st==="borrowed") b++;
+        if(st==="returned") r++;
+        if(st==="overdue") o++;
+
+        html += `
+        <tr>
+            <td>${rw.name}</td>
+            <td>${rw.type}</td>
+            <td>${rw.book}</td>
+            <td>${rw.copies}</td>
+            <td><span class="status ${st}">${rw.status}</span></td>
+            <td>
+                ${st !== "returned"
+                    ? `<button class="btn return" onclick="returnBook(${rw.id})">Return</button>`
+                    : "✓"}
+            </td>
+        </tr>
+        `;
+    });
+
+    document.getElementById("tableBody").innerHTML = html;
+    document.getElementById("total").innerText = records.length;
+    document.getElementById("borrowed").innerText = b;
+    document.getElementById("returned").innerText = r;
+    document.getElementById("overdue").innerText = o;
+}
+
+renderTable();
+</script>
+
+{% endblock %}

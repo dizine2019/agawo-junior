@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block content %}
+<style>
+    table {
+        width: 100%;
+        border-collapse: collapse !important;
+        background: white;
+    }
+
+    th, td {
+        border: 1px solid #000 !important;
+        padding: 6px 4px;
+        text-align: center;
+        font-size: 0.85em;
+    }
+
+    .name-cell {
+        text-align: left !important;
+        padding-left: 10px !important;
+        white-space: nowrap !important;
+        font-weight: bold;
+    }
+
+    {% if is_pdf %}
+    @page {
+        size: A4 landscape;
+        margin: 0.8cm;
+    }
+    .pdf-only-header {
+        display: block !important;
+        text-align: center;
+        margin-bottom: 15px;
+    }
+    .table-scroll-area { overflow: visible !important; }
+    {% else %}
+    .pdf-only-header { display: none; }
+    .table-scroll-area {
+        width: 100%;
+        overflow-x: auto;
+        max-height: 75vh;
+    }
+    {% endif %}
+
+    thead th {
+        background-color: #1565c0;
+        color: white;
+        text-transform: uppercase;
+    }
+
+    .rubric-tag {
+        font-size: 0.75em;
+        display: block;
+        color: #1565c0;
+        font-weight: bold;
+    }
+
+    .top-row { background-color: #f1f7ff; }
+
+    .btn-view {
+        padding: 4px 8px;
+        background: #2e7d32;
+        color: white;
+        text-decoration: none;
+        border-radius: 3px;
+        font-size: 0.75em;
+        font-weight: bold;
+    }
+</style>
+
+<div style="padding:10px;">
+
+    <!-- PDF HEADER -->
+    <div class="pdf-only-header">
+        <h2>AGAWO COMPREHENSIVE SCHOOL</h2>
+        <p><strong>GRADE:</strong> {{ selected_grade }} | 
+           <strong>TERM:</strong> {{ selected_term }} | 
+           <strong>YEAR:</strong> {{ selected_year }}</p>
+    </div>
+
+    {% if not is_pdf %}
+    <h2 style="text-align:center;">ASSESSMENT RANKING LIST</h2>
+
+    <form method="get" style="text-align:center; margin-bottom:20px;">
+        Grade:
+        <select name="grade">
+            {% for g in grades %}
+                <option value="{{ g }}" {% if g == selected_grade %}selected{% endif %}>{{ g }}</option>
+            {% endfor %}
+        </select>
+
+        Term:
+        <select name="term">
+            {% for t in terms %}
+                <option value="{{ t }}" {% if t == selected_term %}selected{% endif %}>Term {{ t }}</option>
+            {% endfor %}
+        </select>
+
+        <button type="submit">Filter</button>
+    </form>
+    {% endif %}
+
+    <div class="table-scroll-area">
+        <table>
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th class="name-cell">Student Name</th>
+                    {% for subject in subjects %}
+                        <th>{{ subject }}</th>
+                    {% endfor %}
+                    <th>Total</th>
+                    <th>Rubric</th>
+                    {% if not is_pdf %}
+                        <th>Report</th>
+                    {% endif %}
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for row in performance_data %}
+                <tr class="{% if forloop.counter <= 3 and not is_pdf %}top-row{% endif %}">
+                    
+                    <td>{{ forloop.counter }}</td>
+
+                    <!-- ✅ BULLETPROOF NAME DISPLAY -->
+                    <td class="name-cell">
+                        {% if row.student.full_name %}
+                            {{ row.student.full_name|upper }}
+                        {% elif row.student.first_name %}
+                            {{ row.student.first_name|upper }} {{ row.student.last_name|upper }}
+                        {% elif row.student.student_name %}
+                            {{ row.student.student_name|upper }}
+                        {% else %}
+                            UNKNOWN
+                        {% endif %}
+                    </td>
+
+                    {% for item in row.subject_marks %}
+                        <td>
+                            {% if item.score is not None %}
+                                {{ item.score }}
+                                <span class="rubric-tag">{{ item.rubric }}</span>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    {% endfor %}
+
+                    <td><strong>{{ row.total }}</strong></td>
+                    <td><strong>{{ row.overall_rubric }}</strong></td>
+
+                    {% if not is_pdf %}
+                    <td>
+                        <a href="{% url 'report_card' row.student.id %}?term={{ selected_term }}&year={{ selected_year }}" 
+                           class="btn-view" target="_blank">
+                           VIEW
+                        </a>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="{{ subjects|length|add:5 }}">
+                        No data found
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if not is_pdf %}
+    <div style="margin-top:20px; display:flex; justify-content:space-between;">
+        <small>* Sorted by total marks</small>
+
+        <div>
+            <a href="{% url 'download_view_list_pdf' %}?grade={{ selected_grade }}&term={{ selected_term }}&year={{ selected_year }}">
+                Download PDF
+            </a>
+            <button onclick="window.print()">Print</button>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+{% endblock %}
