@@ -164,12 +164,21 @@ def add_students_bulk(request):
             
     return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=405)
 
+from django.db.models.functions import Cast
+from django.db.models import IntegerField
+
 @login_required
 def grade_students(request, grade):
     grade_map = {str(i): f"Grade {i}" for i in range(1, 10)}
     grade_name = grade_map.get(str(grade), f"Grade {grade}")
-    students = Student.objects.filter(grade=grade_name)
+    
+    # Cast the text-based admission_number field into an Integer type to enforce true numerical 1 to 10 sorting
+    students = Student.objects.filter(grade=grade_name).annotate(
+        admission_int=Cast('admission_number', output_field=IntegerField())
+    ).order_by('admission_int')
+    
     return render(request, "grade_students.html", {"grade": grade, "students": students})
+
 
 @login_required
 @user_passes_test(is_admin)
