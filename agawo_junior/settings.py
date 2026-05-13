@@ -14,7 +14,7 @@ SECRET_KEY = os.environ.get(
 )
 
 # DEBUG: False in production (Render), True in development
-DEBUG = 'RENDER' not in os.environ
+DEBUG = 'True' not in os.environ
 
 ALLOWED_HOSTS = [
     "localhost",
