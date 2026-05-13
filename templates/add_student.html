@@ -228,14 +228,14 @@ function submitAll() {
         return;
     }
 
-    // 1. Target the first added student row inside the tracking array securely
+    // 1. FIXED: Safely grab the first student object row inside the array container
     let firstStudent = students[0];
     let rawGrade = firstStudent.grade;
 
-    // 2. Extract ONLY the numeric digits out of the string (e.g. converting "Grade 4" into "4")
+    // 2. Extract ONLY numeric digits (e.g. converting "Grade 3" or "3" into "3")
     let targetRouteParam = rawGrade.replace(/\D/g, '').trim();
 
-    // 3. Set a fallback value if no numbers are found to avoid structural URL breaking
+    // 3. Fallback protection layer to avoid passing empty data values down to the URL router
     if (!targetRouteParam) {
         targetRouteParam = "1";
     }
@@ -251,7 +251,7 @@ function submitAll() {
     .then(response => {
         if (!response.ok) {
             return response.json().then(errData => {
-                throw new Error(errData.message || 'Server error encountered.');
+                throw new Error(errData.message || 'Server processing failure.');
             });
         }
         return response.json();
@@ -261,7 +261,7 @@ function submitAll() {
             alert("Students saved successfully!");
             students = [];
             renderTable();
-            // Clean redirect that satisfies path('grades/<int:grade>/') layout exactly
+            // Redirect smoothly to your integer-matching grades directory path
             window.location.href = "/grades/" + encodeURIComponent(targetRouteParam) + "/";
         } else {
             alert("Error saving: " + data.message);

@@ -105,6 +105,42 @@ def add_student(request):
 
 @login_required
 @user_passes_test(is_admin)
+def edit_student(request, student_id):
+    student = get_object_or_404(Student, id=student_id)
+    
+    # 1. Safely extract numeric digits from "Grade X" or "X" to ensure dynamic URL redirection context
+    raw_grade_str = str(student.grade or "1")
+    numeric_match = re.search(r'\d+', raw_grade_str)
+    grade_id = numeric_match.group() if numeric_match else "1"
+
+    if request.method == "POST":
+        student.student_name = request.POST.get("student_name", "").strip()
+        student.admission_number = request.POST.get("admission_number", "").strip()
+        student.parent_name = request.POST.get("parent_name", "").strip()
+        student.parent_phone = request.POST.get("parent_phone", "").strip()
+        
+        selected_grade = request.POST.get("grade", "Grade 1").strip()
+        if not selected_grade.startswith("Grade "):
+            selected_grade = f"Grade {selected_grade}"
+        student.grade = selected_grade
+        
+        student.save()
+        messages.success(request, "Student details modified successfully.")
+        
+        # Extract numbers from updated target configuration to prevent incorrect redirection path structures
+        new_numeric_match = re.search(r'\d+', selected_grade)
+        new_grade_id = new_numeric_match.group() if new_numeric_match else "1"
+        
+        return redirect(f"/grades/{new_grade_id}/")
+
+    return render(request, "edit_student.html", {
+        "student": student,
+        "grade_id": int(grade_id),  # Guarantees integer layout for {% url 'grade_students' grade_id %}
+        "grades": [f"Grade {i}" for i in range(1, 10)]
+    })
+
+@login_required
+@user_passes_test(is_admin)
 def add_students_bulk(request):
     if request.method == "POST":
         try:
@@ -133,7 +169,6 @@ def grade_students(request, grade):
     grade_map = {str(i): f"Grade {i}" for i in range(1, 10)}
     grade_name = grade_map.get(str(grade), f"Grade {grade}")
     students = Student.objects.filter(grade=grade_name)
-    # FIX: Pass the raw grade number 'grade' so grades.html constructs titles cleanly
     return render(request, "grade_students.html", {"grade": grade, "students": students})
 
 @login_required
@@ -141,14 +176,12 @@ def grade_students(request, grade):
 def delete_student(request, student_id):
     student = get_object_or_404(Student, id=student_id)
     
-    # Safely extract numeric digits from "Grade X" or "X" to ensure dynamic URL redirection
     raw_grade_str = str(student.grade or "1")
     numeric_match = re.search(r'\d+', raw_grade_str)
     redirect_grade_id = numeric_match.group() if numeric_match else "1"
     
     try:
         with transaction.atomic():
-            # Drop cascading dependencies manually to bypass model restrictions
             Mark.objects.filter(student=student).delete()
             student.delete()
         messages.success(request, "Successfully deleted student record.")
@@ -156,14 +189,6 @@ def delete_student(request, student_id):
         messages.error(request, f"Could not perform deletion: {str(e)}")
         
     return redirect(f"/grades/{redirect_grade_id}/")
-
-# Placeholder for edit logic to prevent runtime path breaking
-@login_required
-@user_passes_test(is_admin)
-def edit_student(request, student_id):
-    student = get_object_or_404(Student, id=student_id)
-    # Implement editing functionality here matching your layout rules
-    return render(request, "edit_student.html", {"student": student})
 
 # =========================
 # MARKS ENTRY
