@@ -151,7 +151,7 @@ tr:hover { background: #f9fbfc; }
                         {% if user.is_staff %}
                             <a href="{% url 'delete_student' student.id %}"
                                class="btn delete"
-                               onclick="return confirm('Delete {{ student.student_name }}?');">
+                               onclick="return confirm('Delete {{ student.student_name|escapejs }}?');">
                                Delete
                             </a>
                         {% endif %}
@@ -195,7 +195,7 @@ tr:hover { background: #f9fbfc; }
         // 4. Save back to localStorage for the Library to use
         localStorage.setItem('studentData', JSON.stringify(updatedList));
         
-        console.log("Library data updated for Grade {{ grade }}");
+        console.log("Library data updated for Grade {{ grade|escapejs }}");
     });
 </script>
 
