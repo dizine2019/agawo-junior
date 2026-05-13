@@ -1,4 +1,4 @@
-# urls.py
+# core/urls.py
 from django.contrib import admin
 from django.urls import path
 from core import views
@@ -38,9 +38,7 @@ urlpatterns = [
     path('allocate/', views.lesson_allocation, name='lesson_allocation'),
 
     # ================= LIBRARY ERP =================
-    # This single path handles the page load AND the Borrow/Return AJAX logic
     path('library/', views.library, name='library'), 
-    # This path is kept for the optional standalone return logic
     path('library/return/<int:record_id>/', views.return_book, name='return_book'),
 
     # ================= OTHER MODULES =================
