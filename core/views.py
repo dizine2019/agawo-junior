@@ -97,8 +97,7 @@ def dashboard(request):
 def add_student(request):
     if request.method == "POST":
         Student.objects.create(
-            first_name=request.POST.get("first_name"),
-            last_name=request.POST.get("last_name"),
+            student_name=request.POST.get("student_name"), # Changed from first/last name
             admission_number=request.POST.get("admission_number"),
             grade=request.POST.get("grade"),
             parent_name=request.POST.get("parent_name"),
@@ -108,6 +107,40 @@ def add_student(request):
     return render(request, "add_student.html", {
         "grades": [f"Grade {i}" for i in range(1, 10)]
     })
+
+#--------------------------------add students bulk-------------------
+import json
+from django.http import JsonResponse
+
+@login_required
+@user_passes_test(is_admin)
+def add_students_bulk(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            student_list = data.get('students', [])
+            
+            for s in student_list:
+                clean_grade = s['grade'].replace('Grade ', '').strip()
+
+                # Creates database object parameters utilizing 'student_name'
+                Student.objects.create(
+                    student_name=s['student_name'].strip(),
+                    admission_number=s['admission_number'].strip(),
+                    grade=f"Grade {clean_grade}",
+                    parent_name=s.get('parent_name', '').strip(),
+                    parent_phone=s.get('parent_phone', '').strip()
+                )
+                
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)}, status=400)
+            
+    return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=405)
+
+
+
+#----------------------------------end of add students bulk----------
 
 @login_required
 def grade_students(request, grade):
@@ -704,37 +737,4 @@ def schemes(request):
 
 def teachers_registry(request):
     return render(request, "teacher.html")
-
-@login_required
-@user_passes_test(is_admin)
-def add_students_bulk(request):
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-            students_data = data.get("students", [])
-
-            for s in students_data:
-                # Attribute Mapping:
-                # If your JSON sends "student_name", we split it into first/last
-                full_name = s.get("student_name", "")
-                name_parts = full_name.split(' ', 1)
-                f_name = name_parts[0] if len(name_parts) > 0 else "Unknown"
-                l_name = name_parts[1] if len(name_parts) > 1 else "Student"
-
-                Student.objects.create(
-                    first_name=s.get("first_name", f_name), # Check for separate or split name
-                    last_name=s.get("last_name", l_name),
-                    admission_number=s.get("admission_number"),
-                    parent_name=s.get("parent_name"),
-                    parent_phone=s.get("parent_phone"),
-                    grade=s.get("grade")
-                )
-
-            return JsonResponse({"status": "success", "message": f"{len(students_data)} students added."})
-
-        except Exception as e:
-            return JsonResponse({"status": "error", "message": str(e)})
-
-    return JsonResponse({"status": "error", "message": "Invalid request method"})
-
 

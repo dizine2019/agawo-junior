@@ -228,6 +228,9 @@ function submitAll() {
         return;
     }
 
+    let rawGrade = students[0].grade;
+    let targetRouteParam = rawGrade.replace('Grade ', '').trim();
+
     fetch("{% url 'add_students_bulk' %}", {
         method: "POST",
         headers: {
@@ -236,14 +239,22 @@ function submitAll() {
         },
         body: JSON.stringify({students: students})
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) throw new Error('Network error or server processing failure.');
+        return response.json();
+    })
     .then(data => {
-        alert("Students saved successfully!");
-        students = [];
-        renderTable();
+        if (data.success) {
+            alert("Students saved successfully!");
+            students = [];
+            renderTable();
+            window.location.href = "/grades/" + encodeURIComponent(targetRouteParam) + "/";
+        } else {
+            alert("Error saving: " + data.message);
+        }
     })
     .catch(error => {
-        alert("Error saving students");
+        alert("Error saving student information.");
         console.error(error);
     });
 }
