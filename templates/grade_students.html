@@ -103,6 +103,7 @@ tr:hover { background: #f9fbfc; }
         <table>
             <thead>
                 <tr>
+                    <th style="width: 50px;">#</th> <!-- Added Number Column Header -->
                     <th>Adm No</th>
                     <th>Full Name</th>
                     <th>Assessment No</th>
@@ -116,6 +117,11 @@ tr:hover { background: #f9fbfc; }
             <tbody>
                 {% for student in students %}
                 <tr>
+                    <!-- Dynamic numbering loop logic -->
+                    <td style="font-weight: bold; color: #7f8c8d;">
+                        {{ forloop.counter }}
+                    </td>
+
                     <td style="font-weight:bold; color:#1565c0;">
                         {{ student.admission_number }}
                     </td>
@@ -160,7 +166,7 @@ tr:hover { background: #f9fbfc; }
 
                 {% empty %}
                 <tr>
-                    <td colspan="7" class="empty">
+                    <td colspan="8" class="empty"> <!-- Updated colspan from 7 to 8 -->
                         No students found in Grade {{ grade }}.
                     </td>
                 </tr>
@@ -175,10 +181,8 @@ tr:hover { background: #f9fbfc; }
 <!-- 🚀 LIBRARY BRIDGE SCRIPT 🚀 -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // 1. Get existing data so we don't delete students from other grades
         let allStudents = JSON.parse(localStorage.getItem('studentData')) || [];
 
-        // 2. Create a list of students currently on THIS page (this specific Grade)
         const currentGradeStudents = [
             {% for student in students %}
             {
@@ -188,11 +192,9 @@ tr:hover { background: #f9fbfc; }
             {% endfor %}
         ];
 
-        // 3. Remove old records for THIS grade only, then add the fresh ones
         const otherGrades = allStudents.filter(s => s.grade !== "Grade {{ grade|escapejs }}");
         const updatedList = [...otherGrades, ...currentGradeStudents];
 
-        // 4. Save back to localStorage for the Library to use
         localStorage.setItem('studentData', JSON.stringify(updatedList));
         
         console.log("Library data updated for Grade {{ grade|escapejs }}");
