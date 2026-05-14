@@ -22,6 +22,18 @@ ALLOWED_HOSTS = [
     ".onrender.com"
 ]
 
+# Tell Django it is running behind Render's secure reverse proxy
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Accept and send session/CSRF cookies over HTTPS proxies securely
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+
+# Trust your Render domain subdomains for form submissions
+CSRF_TRUSTED_ORIGINS = [
+    "https://*.onrender.com"
+]
+
 # =========================
 # APPS
 # =========================
