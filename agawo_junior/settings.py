@@ -90,7 +90,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'agawo_junior.wsgi.application'
 
 # =========================
-# DATABASE
+# DATABASE (PRODUCTION BACKEND CONNECTION)
 # =========================
 DATABASES = {
     'default': dj_database_url.config(
