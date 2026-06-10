@@ -1,4 +1,3 @@
-# urls.py
 from django.contrib import admin
 from django.urls import path
 from core import views
@@ -7,15 +6,19 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     # ================= AUTHENTICATION =================
+    # Your single login views now handle smart redirection automatically
     path('', views.login_view, name='login'),
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
 
     # ================= DASHBOARD =================
     path('dashboard/', views.dashboard, name='dashboard'),
+    
+    # 🔒 RESTRICTED: New secure portal specifically for teachers
+    path('teacher-dashboard/', views.teacher_dashboard, name='teacher_dashboard'),
 
     # ================= STUDENT MANAGEMENT =================
-    path('grades/<int:grade>/', views.grade_students, name='grade_students'),
+    path('grades/<str:grade>/', views.grade_students, name='grade_students'), # Changed int to str to support your 'Grade X' choice strings
     path('student/add/', views.add_student, name='add_student'), 
     path('student/<int:student_id>/edit/', views.edit_student, name='edit_student'),
     path('student/<int:student_id>/delete/', views.delete_student, name='delete_student'),
@@ -24,6 +27,9 @@ urlpatterns = [
     # ================= ASSESSMENT & MARKS =================
     path('marks-entry/', views.marks_entry, name='marks_entry'),
     path('marks/add/', views.add_mark, name='add_mark'),
+    
+    # 🔒 RESTRICTED: Secure mark entry path specifically checking teacher allocation tokens
+    path('teacher/enter-mark/<int:student_id>/<str:subject>/', views.teacher_enter_mark, name='teacher_enter_mark'),
 
     # ================= RANKING & REPORTS =================
     path('marks/view-list/', views.view_list, name='view_list'),
@@ -38,10 +44,9 @@ urlpatterns = [
     path('allocate/', views.lesson_allocation, name='lesson_allocation'),
 
     # ================= LIBRARY ERP =================
-    # This single path handles the page load AND the Borrow/Return AJAX logic
     path('library/', views.library, name='library'), 
-    # This path is kept for the optional standalone return logic
-    path('library/return/<int:record_id>/', views.return_book, name='return_book'),
+    path('library/manage/', views.manage_books, name='manage_books'),
+    path('library/book/<int:book_id>/delete/', views.delete_book, name='delete_book'),
 
     # ================= OTHER MODULES =================
     path("course-books/", views.course_books, name="course_books"),
@@ -50,4 +55,6 @@ urlpatterns = [
     path('reports/', views.reports, name='reports'),
     path('fees/', views.fees, name='fees'),
     path('timetable/generate/', views.generate_timetable, name='generate_timetable'),
+    path('students-portal/', views.students_portal_view, name='students_portal'),
+    path('students-portal/library/', views.digital_library_view, name='digital_library'),
 ]

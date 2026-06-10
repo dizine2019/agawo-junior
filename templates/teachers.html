@@ -1,235 +1,190 @@
 {% extends "base.html" %}
 {% block content %}
 
-<!-- Modern Font Loading -->
-<link href="https://googleapis.com" rel="stylesheet">
-
-<div class="app-viewport">
-    <!-- 1. PERMANENTLY PINNED TOP SECTION -->
-    <div class="pinned-section">
-        <header class="registry-header">
-            <div class="header-text">
-                <h1>Agawo School Registry</h1>
-                <p>Staff Management & Curriculum Control</p>
-            </div>
-            <a href="{% url 'lesson_allocation' %}" class="back-link">← Back to Allocation</a>
-        </header>
-
-        <section class="registration-box">
-            <div class="box-label">Register New Teacher</div>
-            <div class="input-row">
-                <input type="text" id="teacherName" placeholder="Enter Full Name (e.g., Mr. Fredrick Odhiambo)" autocomplete="off">
-                <button onclick="addTeacher()" class="btn-register">Register Teacher</button>
-            </div>
-        </section>
-    </div>
-
-    <!-- 2. SCROLLABLE STAFF LIST -->
-    <main class="scrollable-content">
-        <div class="list-card">
-            <div class="list-header">
-                <h2>Active Staff Database</h2>
-                <span id="teacherCount" class="count-badge">0 Teachers Registered</span>
-            </div>
-            
-            <table class="staff-table">
-                <thead>
-                    <tr>
-                        <th>TEACHER NAME</th>
-                        <th style="text-align: right;">MANAGEMENT</th>
-                    </tr>
-                </thead>
-                <tbody id="staffBody">
-                    <!-- Loaded via JavaScript -->
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Footer Action Button -->
-        <div class="footer-actions">
-            <a href="{% url 'lesson_allocation' %}" class="btn-proceed">
-                Proceed to Allocate Lessons <span class="arrow">→</span>
-            </a>
-        </div>
-    </main>
-</div>
-
 <style>
-    :root {
-        --primary: #2563eb;
-        --success: #10b981;
-        --warning: #f59e0b;
-        --danger: #ef4444;
-        --bg-app: #f3f4f6;
-        --white: #ffffff;
-        --text-dark: #111827;
-        --text-light: #6b7280;
-        --font-main: 'Inter', sans-serif;
+    .teacher-container {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 24px;
+        margin-top: 15px;
     }
-
-    .app-viewport {
-        display: flex;
-        flex-direction: column;
-        height: calc(100vh - 60px);
-        max-width: 950px;
-        margin: 0 auto;
-        font-family: var(--font-main);
-        overflow: hidden;
+    .form-box, .list-box {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.03);
     }
-
-    .pinned-section {
-        flex-shrink: 0;
-        background: var(--bg-app);
-        padding: 20px 10px 10px 10px;
-        z-index: 100;
+    .box-title {
+        font-size: 16px;
+        font-weight: 800;
+        margin-bottom: 16px;
+        color: #111827;
+        border-bottom: 2px solid #f3f4f6;
+        padding-bottom: 8px;
+    }
+    .input-grp {
+        margin-bottom: 14px;
+    }
+    .input-grp label {
+        display: block;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #6b7280;
+        margin-bottom: 4px;
+    }
+    .input-grp input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 13px;
+    }
+    .input-grp input:focus {
+        outline: none;
+        border-color: #1565c0;
+    }
+    .submit-btn {
+        width: 100%;
+        background: #1565c0;
+        color: white;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+    .submit-btn:hover { background: #0d47a1; }
+    
+    /* Roster Table */
+    .roster-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+    .roster-table th {
+        background: #f9fafb;
+        padding: 10px;
+        text-align: left;
+        font-weight: 700;
+        color: #6b7280;
         border-bottom: 2px solid #e5e7eb;
     }
-
-    .scrollable-content {
-        flex-grow: 1;
-        overflow-y: auto;
-        padding: 15px 10px 100px 10px;
-        scroll-behavior: smooth;
+    .roster-table td {
+        padding: 12px 10px;
+        border-bottom: 1px solid #e5e7eb;
     }
-
-    .registry-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
+    .badge-user {
+        background: #e0f2fe;
+        color: #0369a1;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: 700;
+        font-size: 11px;
     }
-
-    .registry-header h1 { font-size: 1.75rem; font-weight: 800; margin: 0; color: var(--text-dark); letter-spacing: -0.02em; }
-    .registry-header p { margin: 4px 0 0 0; color: var(--text-light); font-size: 0.9rem; }
-    .back-link { text-decoration: none; color: var(--primary); font-weight: 600; font-size: 0.85rem; }
-
-    .registration-box {
-        background: var(--white);
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e5e7eb;
-    }
-
-    .box-label { font-size: 0.8rem; font-weight: 700; color: var(--text-light); text-transform: uppercase; margin-bottom: 12px; }
-    .input-row { display: flex; gap: 12px; }
-
-    input[type="text"] {
-        flex: 1;
-        padding: 14px 16px;
-        border: 2px solid #e5e7eb;
+    .alert {
+        padding: 12px;
         border-radius: 8px;
-        font-size: 1rem;
-        transition: border-color 0.2s;
+        margin-bottom: 16px;
+        font-size: 13px;
+        font-weight: 600;
+        text-align: center;
     }
+    .alert-success { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .alert-error { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
 
-    input[type="text"]:focus { outline: none; border-color: var(--primary); }
-
-    /* Button Styling */
-    .btn-register { background: var(--primary); color: white; border: none; padding: 0 24px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.2s; }
-    .btn-register:hover { background: #1d4ed8; }
-
-    .btn-edit { background: #fef9c3; color: #a16207; border: none; padding: 6px 15px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; margin-right: 5px; transition: 0.2s; }
-    .btn-edit:hover { background: #fde047; color: #854d0e; }
-
-    .btn-delete { background: #fee2e2; color: var(--danger); border: none; padding: 6px 15px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: 0.2s; }
-    .btn-delete:hover { background: var(--danger); color: white; }
-
-    .list-card { background: var(--white); border-radius: 12px; border: 1px solid #e5e7eb; overflow: hidden; }
-    .list-header { padding: 16px 24px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; background: #fafafa; }
-    .list-header h2 { font-size: 1.1rem; margin: 0; color: var(--text-dark); }
-    .count-badge { background: #dbeafe; color: var(--primary); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
-
-    .staff-table { width: 100%; border-collapse: collapse; }
-    .staff-table th { text-align: left; padding: 12px 24px; font-size: 0.7rem; color: var(--text-light); letter-spacing: 0.05em; border-bottom: 1px solid #eee; }
-    .staff-table td { padding: 16px 24px; border-bottom: 1px solid #f9f9f9; font-size: 0.95rem; }
-    
-    .footer-actions { margin-top: 30px; text-align: center; }
-    .btn-proceed { display: inline-block; background: #111827; color: white; text-decoration: none; padding: 18px 40px; border-radius: 12px; font-weight: 700; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2); transition: 0.2s; }
-    .btn-proceed:hover { transform: translateY(-3px); background: #1f2937; }
-
-    .scrollable-content::-webkit-scrollbar { width: 6px; }
-    .scrollable-content::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+    @media(max-width: 768px) {
+        .teacher-container { grid-template-columns: 1fr; }
+    }
 </style>
 
-<script>
-    let teachers = JSON.parse(localStorage.getItem('masterTeachers')) || [];
+<h2>Teacher Profile Registry</h2>
+<p style="color: #6b7280; font-size: 13px; margin-bottom: 15px;">Add academic staff members and assign their system access login credentials.</p>
 
-    function addTeacher() {
-        const input = document.getElementById('teacherName');
-        const name = input.value.trim();
-        if (!name) return;
-        if (teachers.includes(name)) {
-            alert("Teacher already registered!");
-            return;
-        }
+<!-- Notification Messages -->
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-error{% endif %}">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
 
-        teachers.push(name);
-        saveAndRender();
-        input.value = '';
-        input.focus();
-
-        const scrollBox = document.querySelector('.scrollable-content');
-        setTimeout(() => { scrollBox.scrollTop = scrollBox.scrollHeight; }, 100);
-    }
-
-    // NEW: Edit Function with Smart Sync
-    function editTeacher(index) {
-        const oldName = teachers[index];
-        const newName = prompt("Edit Teacher Name:", oldName);
-        
-        if (newName !== null && newName.trim() !== "") {
-            const trimmedName = newName.trim();
-            if (teachers.includes(trimmedName) && trimmedName !== oldName) {
-                alert("A teacher with this name already exists!");
-                return;
-            }
-
-            // Update Registry
-            teachers[index] = trimmedName;
+<div class="teacher-container">
+    
+    <!-- LEFT PANEL: ADD NEW TEACHER & ACCOUNT -->
+    <div class="form-box">
+        <div class="box-title">Register New Teacher</div>
+        <form method="POST">
+            {% csrf_token %}
             
-            // Smart Sync: Update existing allocations
-            let allocations = JSON.parse(localStorage.getItem('teacherAllocations')) || [];
-            allocations.forEach(alloc => {
-                if (alloc.teacher === oldName) {
-                    alloc.teacher = trimmedName;
-                }
-            });
-            localStorage.setItem('teacherAllocations', JSON.stringify(allocations));
+            <div class="input-grp">
+                <label>Full Name</label>
+                <input type="text" name="name" placeholder="e.g., Madam Mary Atieno" required>
+            </div>
+            
+            <div class="input-grp">
+                <label>Phone Number</label>
+                <input type="text" name="phone" placeholder="e.g., 0712345678">
+            </div>
+            
+            <div class="input-grp" style="margin-top: 20px; border-top: 1px dashed #e5e7eb; pt: 10px;">
+                <label style="color: #1565c0;">Portal Username</label>
+                <input type="text" name="username" placeholder="Create login username" required>
+            </div>
+            
+            <div class="input-grp">
+                <label style="color: #1565c0;">Portal Password</label>
+                <input type="password" name="password" placeholder="Create secure password" required>
+            </div>
+            
+            <button type="submit" class="submit-btn">Save Teacher Account</button>
+        </form>
+    </div>
 
-            saveAndRender();
-        }
-    }
+    <!-- RIGHT PANEL: STAFF ROSTER ROSTER -->
+    <div class="list-box">
+        <div class="box-title">Registered Academic Staff</div>
+        <table class="roster-table">
+            <thead>
+                <tr>
+                    <th>Teacher Name</th>
+                    <th>Phone Contact</th>
+                    <th>Linked Login ID</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for teacher in teachers %}
+                <tr>
+                    <td style="font-weight: 700;">{{ teacher.name }}</td>
+                    <td>{{ teacher.phone|default:"—" }}</td>
+                    <td>
+                        {% if teacher.user %}
+                            <span class="badge-user">👤 {{ teacher.user.username }}</span>
+                        {% else %}
+                            <span style="color: #b91c1c; font-size: 11px;">⚠️ No account linked</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'delete_teacher' teacher.id %}" 
+                           onclick="return confirm('Are you sure you want to completely remove this teacher account?');" 
+                           style="color: #b91c1c; text-decoration: none; font-weight: 700;">
+                           Delete
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" style="text-align: center; color: #6b7280; padding: 20px;">No teachers registered in the system database yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
-    function deleteTeacher(index) {
-        if(confirm(`Permanently remove ${teachers[index]}?`)) {
-            teachers.splice(index, 1);
-            saveAndRender();
-        }
-    }
-
-    function saveAndRender() {
-        localStorage.setItem('masterTeachers', JSON.stringify(teachers));
-        document.getElementById('teacherCount').innerText = `${teachers.length} Staff Member${teachers.length !== 1 ? 's' : ''}`;
-        
-        const body = document.getElementById('staffBody');
-        if (teachers.length === 0) {
-            body.innerHTML = '<tr><td colspan="2" style="text-align:center; padding:50px; color:#999;">No teachers found in the registry.</td></tr>';
-            return;
-        }
-
-        body.innerHTML = teachers.map((t, i) => `
-            <tr>
-                <td><strong>${t}</strong></td>
-                <td style="text-align: right;">
-                    <button class="btn-edit" onclick="editTeacher(${i})">Edit</button>
-                    <button class="btn-delete" onclick="deleteTeacher(${i})">Remove</button>
-                </td>
-            </tr>
-        `).join('');
-    }
-
-    saveAndRender();
-</script>
+</div>
 
 {% endblock %}

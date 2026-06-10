@@ -1,119 +1,372 @@
 {% extends "base.html" %}
+{% load static %}
+
 {% block content %}
+
 <style>
-    /* ... existing styles remain the same ... */
-    @page { size: A4; margin: 0.75cm; }
-    .report-body { font-family: Helvetica, Arial, sans-serif; color: #333; line-height: 1.2; }
-    .header { text-align: center; margin-bottom: 15px; }
-    .school-name { color: #1a73e8; font-size: 28px; margin: 0; font-weight: bold; }
-    .school-info { font-size: 11px; margin: 2px 0; color: #555; }
-    .report-title { text-decoration: underline; font-weight: bold; font-size: 16px; color: #1a73e8; margin-top: 10px; }
-    .info-table { width: 100%; border-collapse: collapse; margin-top: 15px; border-top: 2px solid #000; }
-    .info-box { border: 1px solid #000; padding: 8px; width: 50%; vertical-align: top; }
-    .info-label { font-size: 9px; font-weight: bold; color: #444; }
-    .info-value { font-size: 14px; font-weight: bold; margin-top: 3px; }
-    .summary-table { width: 100%; margin: 20px 0; border-spacing: 15px 0; }
-    .summary-card { padding: 10px; text-align: center; color: white; border-radius: 4px; width: 33%; }
-    .bg-blue { background-color: #1a73e8; }
-    .bg-green { background-color: #2e7d32; }
-    .summary-label { font-size: 10px; text-transform: uppercase; display: block; margin-bottom: 5px; }
-    .summary-val { font-size: 22px; font-weight: bold; }
-    .marks-table { width: 100%; border-collapse: collapse; }
-    .marks-table th { background-color: #1a73e8; color: white; padding: 10px; font-size: 11px; border: 1px solid #fff; }
-    .marks-table td { padding: 8px; border: 1px solid #333; font-size: 11px; }
-    .text-center { text-align: center; }
-    .footer-table { width: 100%; margin-top: 40px; }
-    .sig-line { border-top: 1px solid #000; width: 200px; margin-bottom: 5px; }
-    .stamp-box { border: 1px dashed #666; width: 120px; height: 80px; text-align: center; font-size: 10px; padding-top: 30px; color: #666; }
+
+/* ================= OUTER CONTAINER ================= */
+.report-container {
+    max-width: 800px;
+    margin: 20px auto;
+    background: #fff;
+    padding: 25px 30px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.08);
+}
+
+/* ================= BUTTONS ================= */
+.btn-row {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.print-btn {
+    background: #0056B3;
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    font-size: 12px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.print-btn:hover { background: #004494; }
+
+.view-btn {
+    background: #1D8A48;
+    color: white;
+    padding: 8px 14px;
+    font-size: 12px;
+    border-radius: 4px;
+    text-decoration: none;
+}
+
+/* ================= GENERAL ================= */
+.text-center { text-align: center; }
+.bold { font-weight: bold; }
+
+/* ================= HEADER ================= */
+.header-table {
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.logo { width: 120px; }
+
+.school-title {
+    color: #0056B3;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.school-subtitle {
+    font-size: 13px;
+    color: #718096;
+}
+
+/* ================= BANNER ================= */
+.banner-td {
+    background: #EBF8FF;
+    border: 1px solid #BEE3F8;
+    text-align: center;
+    font-weight: bold;
+    padding: 8px;
+    color: #2B6CB0;
+}
+
+/* ================= STUDENT INFO ================= */
+.student-info-table {
+    width: 100%;
+    margin-top: 10px;
+    margin-bottom: 15px;
+    border-collapse: collapse;
+}
+
+.info-cell {
+    width: 25%;
+    padding: 8px;
+    border: 1px solid #E2E8F0;
+    background: #F7FAFC;
+}
+
+.info-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #718096;
+}
+
+.info-value {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+/* ================= KPI ================= */
+.kpi-table {
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.kpi-td {
+    width: 33%;
+    padding: 12px;
+    text-align: center;
+    color: white;
+}
+
+.kpi-blue { background: #0056B3; }
+.kpi-green { background: #1D8A48; }
+
+.kpi-value {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+/* ================= MARKS ================= */
+.marks-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.marks-table th {
+    background: #0056B3;
+    color: white;
+    padding: 9px;
+    font-size: 13px;
+}
+
+.marks-table td {
+    padding: 9px;
+    border: 1px solid #CBD5E0;
+    font-size: 13px;
+}
+
+.row-even { background: #F7FAFC; }
+
+/* ================= SIGNATURES ================= */
+.sign-table {
+    width: 100%;
+    margin-top: 90px;
+}
+
+.sign-box {
+    width: 33%;
+    text-align: center;
+    vertical-align: bottom;
+}
+
+.line {
+    border-top: 1px solid #A0AEC0;
+    width: 80%;
+    margin: 0 auto;
+    height: 40px;
+}
+
+.sign-title {
+    font-size: 13px;
+    font-weight: bold;
+    color: #4A5568;
+    margin-top: 3px;
+}
+
+/* STAMP */
+.stamp-box {
+    border: 2px dashed #CBD5E0;
+    width: 120px;
+    height: 80px;
+    text-align: center;
+    font-size: 9px;
+    color: #A0AEC0;
+    margin: 0 auto;
+    padding-top: 25px;
+}
+
+/* ================= FIXED PRINT STYLING ================= */
+@media print {
+    /* Overrides external wrapper backgrounds to force pure white canvas */
+    html, body {
+        background-color: #ffffff !important;
+        background: #ffffff !important;
+        background-image: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    body * {
+        visibility: hidden;
+    }
+
+    .report-container,
+    .report-container * {
+        visibility: visible;
+    }
+
+    .report-container {
+        position: absolute;
+        left: 50%;
+        top: 0;
+        transform: translateX(-50%);
+        box-shadow: none;
+        width: 800px;
+        background: #ffffff !important;
+        margin: 0 auto !important;
+    }
+
+    .no-print {
+        display: none !important;
+    }
+}
+
 </style>
 
-<div class="report-body">
-    <div class="header">
-        <h1 class="school-name">AGAWO COMPREHENSIVE SCHOOL</h1>
-        <p class="school-info">P.O. Box 218-40222, Oyugis</p>
-        <p class="school-info">Email: info@agawo.ac.ke | Website: www.agawo.ac.ke</p>
-        <div class="report-title">LEARNER'S PROGRESS REPORT</div>
+<div class="report-container">
+
+    <!-- BUTTONS -->
+    <div class="btn-row no-print">
+
+        <a class="view-btn"
+           href="{% url 'view_list' %}?grade={{ student.grade }}&term={{ selected_term }}&year={{ selected_year }}">
+            📊 View List
+        </a>
+
+        <button class="print-btn" onclick="window.print()">
+            🖨️ Print Report
+        </button>
+
     </div>
 
-    <table class="info-table">
+    <!-- HEADER -->
+    <table class="header-table">
         <tr>
-            <td class="info-box">
-                <div class="info-label">NAME OF LEARNER</div>
-                <div class="info-value">{{ student.full_name|upper|default:"N/A" }}</div>
+            <td style="width:8%;">
+                <img src="{% static 'images/logo.png' %}" class="logo">
             </td>
-            <td class="info-box">
-                <div class="info-label">ASSESSMENT NO / ADM</div>
-                <div class="info-value">{{ student.admission_number|default:"N/A" }}</div>
-            </td>
-        </tr>
-        <tr>
-            <td class="info-box">
-                <div class="info-label">GRADE / LEVEL</div>
-                <div class="info-value">{{ student.grade|default:"N/A" }}</div>
-            </td>
-            <td class="info-box">
-                <div class="info-label">ASSESSMENT PERIOD</div>
-                <div class="info-value">Term {{ term|default:"1" }} - {{ year|default:"2026" }}</div>
+
+            <td class="text-center">
+                <h1 class="school-title">AGAWO COMPREHENSIVE SCHOOL</h1>
+                <p class="school-subtitle">P.O. BOX 218-40222, OYUGIS</p>
+                <p class="school-subtitle">CONTACTS +254 733642329 | +254 715179886</p>
             </td>
         </tr>
     </table>
 
-    <table class="summary-table">
+    <!-- BANNER -->
+    <table style="width:100%; margin-bottom:15px;">
         <tr>
-            <td class="summary-card bg-blue">
-                <span class="summary-label">TOTAL MARKS</span>
-                <span class="summary-val">{{ total_marks|default:"0" }}</span>
+            <td class="banner-td">LEARNER'S PROGRESS REPORT CARD</td>
+        </tr>
+    </table>
+
+    <!-- STUDENT INFO -->
+    <table class="student-info-table">
+        <tr>
+            <td class="info-cell">
+                <div class="info-label">Name</div>
+                <div class="info-value">{{ student.student_name|upper }}</div>
             </td>
-            <td class="summary-card bg-green">
-                <span class="summary-label">AVERAGE SCORE</span>
-                <span class="summary-val">{{ average_marks|default:"0" }}%</span>
+
+            <td class="info-cell">
+                <div class="info-label">Admission No</div>
+                <div class="info-value">{{ student.admission_number }}</div>
             </td>
-            <td class="summary-card bg-blue">
-                <span class="summary-label">OVERALL GRADE</span>
-                <span class="summary-val">{{ overall_grade|default:"N/A" }}</span>
+
+            <td class="info-cell">
+                <div class="info-label">Class</div>
+                <div class="info-value">{{ student.grade }}</div>
+            </td>
+
+            <td class="info-cell">
+                <div class="info-label">Term</div>
+                <div class="info-value">{{ selected_term }} / {{ selected_year }}</div>
             </td>
         </tr>
     </table>
 
+    <!-- KPI -->
+    <table class="kpi-table">
+        <tr>
+            <td class="kpi-td kpi-blue">
+                Total<br>{{ total_marks }}
+            </td>
+
+            <td style="width:2%;"></td>
+
+            <td class="kpi-td kpi-green">
+                Average<br>{{ average_marks }}%
+            </td>
+
+            <td style="width:2%;"></td>
+
+            <td class="kpi-td kpi-blue">
+                Grade<br>{{ overall_rubric }}
+            </td>
+        </tr>
+    </table>
+
+    <!-- MARKS TABLE -->
     <table class="marks-table">
         <thead>
             <tr>
-                <th style="text-align: left; width: 25%;">Learning Area</th>
-                <th style="width: 15%;">Score (%)</th>
-                <th style="width: 15%;">Rating</th>
-                <th style="text-align: left;">Teacher's Progress Remarks</th>
+                <th>SUBJECT</th>
+                <th>SCORE</th>
+                <th>RATING</th>
+                <th>TEACHERS REMARKS </th>
             </tr>
         </thead>
+
         <tbody>
-            {% for item in marks %}
-            <tr>
-                <td><strong>{{ item.subject|default:"Unknown Subject" }}</strong></td>
-                <td class="text-center"><strong>{{ item.score|default:"0" }}</strong></td>
-                <td class="text-center"><strong>{{ item.rubric.code|default:"-" }}</strong></td>
-                <td>{{ item.rubric.label|default:"No remarks" }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="4" class="text-center">No assessment records found for this period.</td>
+            {% for item in subject_marks %}
+            <tr class="{% cycle '' 'row-even' %}">
+                <td class="bold">{{ item.subject|upper }}</td>
+                <td>{{ item.score|default:"-" }}</td>
+                <td>{{ item.rubric|default:"-" }}</td>
+
+                <!-- ✅ UPDATED TEACHER REMARKS -->
+                <td style="font-style: italic; color:#4A5568;">
+                    {% if item.rubric == "EE" or item.rubric == "EE1" or item.rubric == "EE2" %}
+                        Exceeds expectations. Outstanding progress.
+                    {% elif item.rubric == "ME" or item.rubric == "ME1" or item.rubric == "ME2" %}
+                        Meets expectations. Capable performance.
+                    {% elif item.rubric == "AE" or item.rubric == "AE1" or item.rubric == "AE2" %}
+                        Approaching expectations. Needs improvement in key areas.
+                    {% elif item.rubric == "BE" or item.rubric == "BE1" or item.rubric == "BE2" %}
+                        Below expectations. Requires immediate remedial support.
+                    {% else %}
+                        No continuous assessment records entered for this subject.
+                    {% endif %}
+                </td>
+
             </tr>
             {% endfor %}
         </tbody>
     </table>
 
-    <table class="footer-table">
+    <!-- SIGNATURES -->
+    <table class="sign-table">
         <tr>
-            <td style="vertical-align: bottom; width: 35%;">
-                <div class="sig-line"></div>
-                <strong>Class Teacher</strong>
+
+            <td class="sign-box">
+                <div class="line"></div>
+                <div class="sign-title">CLASS TEACHER</div>
             </td>
-            <td style="vertical-align: bottom; width: 35%;">
-                <div class="sig-line"></div>
-                <strong>Head Teacher</strong>
+
+            <td class="sign-box">
+                <div class="line"></div>
+                <div class="sign-title">HEAD TEACHER </div>
             </td>
-            <td style="width: 30%; text-align: right;">
-                <div class="stamp-box">SCHOOL STAMP</div>
+
+            <td class="sign-box">
+                <div class="stamp-box">
+                    OFFICIAL<br>STAMP
+                </div>
             </td>
+
         </tr>
     </table>
+
 </div>
+
 {% endblock %}

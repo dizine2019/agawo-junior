@@ -50,6 +50,7 @@
 
     .blue { background: #1565c0; }
     .green { background: #27ae60; }
+    .emerald { background: #059669; } /* Dynamic Green variant for teachers */
     .grey { background: #455a64; }
 
     /* SLIM STATUS BAR */
@@ -74,20 +75,38 @@
         <p>Select an action below to manage learner records.</p>
 
         <div class="button-row">
-            <!-- ENTER MARKS -->
-            <a href="{% url 'add_mark' %}" class="btn-item green">
-                <span>📝</span> Enter Marks
-            </a>
+            
+            <!-- 🔒 DYNAMIC SEGREGATION POINT: ROUTE USER ACCORDING TO ROLE -->
+            {% if hasattr and request.user.teacher_profile or not request.user.is_superuser and not request.user.is_staff %}
+                <!-- 👩‍🏫 TEACHER LINK: Sends them to their allocated subject tables only -->
+                <a href="{% url 'teacher_dashboard' %}" class="btn-item emerald">
+                    <span>📝</span> My Assigned Classes
+                </a>
+            {% else %}
+                <!-- 👑 ADMIN LINK: Gives them global administrative entry clearance -->
+                <a href="{% url 'add_mark' %}" class="btn-item green">
+                    <span>📝</span> Enter Marks (Admin)
+                </a>
+            {% endif %}
 
-            <!-- VIEW RANK LIST -->
+            <!-- VIEW RANK LIST (Only active for admins based on previous view blocks) -->
+            {% if request.user.is_superuser or request.user.is_staff %}
             <a href="{% url 'view_list' %}" class="btn-item blue">
                 <span>📊</span> Rank List
             </a>
+            {% endif %}
 
-            <!-- DASHBOARD -->
-            <a href="{% url 'dashboard' %}" class="btn-item grey">
-                <span>🏠</span> Dashboard
-            </a>
+            <!-- DASHBOARD ROUTING REDIRECTIONS -->
+            {% if hasattr and request.user.teacher_profile %}
+                <a href="{% url 'teacher_dashboard' %}" class="btn-item grey">
+                    <span>🏠</span> Dashboard
+                </a>
+            {% else %}
+                <a href="{% url 'dashboard' %}" class="btn-item grey">
+                    <span>🏠</span> Dashboard
+                </a>
+            {% endif %}
+            
         </div>
 
         <div class="status-bar">

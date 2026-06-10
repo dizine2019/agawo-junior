@@ -1,34 +1,44 @@
-#----------------------------------------------------imports------------------------------
+# =====================================================
+# 1. IMPORTS
+# =====================================================
 import os
 import io
 import json
 import datetime
-from django.utils import timezone  # Useful for handling due dates
+from django.utils import timezone
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.db.models import Q, Sum, Avg
-from django.http import HttpResponse, JsonResponse
+from django.db import transaction
+from django.http import HttpResponse, JsonResponse, HttpResponseForbidden
+# Check your imports section at the top of views.py for this line:
+from django.db.models import Q, Sum, Avg
+
+
 from django.template.loader import get_template
 from django.conf import settings
-from django.views.decorators.csrf import csrf_protect # Ensures safety for your borrow logic
+from django.views.decorators.csrf import csrf_protect
+
 
 # External PDF Library
 from xhtml2pdf import pisa
 
 # Local Models
-# I added 'Book' and 'LibraryRecord' here. 
-# Make sure these names match exactly what is in your models.py file.
 from .models import Student, Mark, Teacher, Allocation, Book, BorrowRecord
 
-# =========================
-# HELPERS
-# =========================
+# =====================================================
+# 2. HELPERS & AUTHENTICATION
+# =====================================================
+#-------------------------------------admin---------------------
 
 def is_admin(user):
-    return user.is_staff
+    # Standard teachers have an account, but is_staff and is_superuser are FALSE.
+    # This function returns True ONLY for true system administrators.
+    return user.is_authenticated and (user.is_superuser or getattr(user, 'is_staff', False))
 
+#------------------------------end admin-------------------------
 def get_grade_num(grade_string):
     try:
         return str(grade_string).split()[-1]
@@ -48,8 +58,7 @@ def get_subjects_for_grade(grade_string):
         return []
 
 def get_cbc_rubric_data(mark):
-    if mark is None:
-        return {'code': 'N/A', 'label': 'No Data'}
+    if mark is None: return {'code': 'N/A', 'label': 'No Data'}
     if mark >= 90: return {'code': 'EE1'}
     elif mark >= 80: return {'code': 'EE2'}
     elif mark >= 65: return {'code': 'ME1'}
@@ -59,22 +68,35 @@ def get_cbc_rubric_data(mark):
     elif mark >= 15: return {'code': 'BE1'}
     else: return {'code': 'BE2'}
 
-# =========================
-# AUTH
-# =========================
-
+#----------------------------------------------login view -------------------------------------
 def login_view(request):
     if request.method == "POST":
-        user = authenticate(
-            request,
-            username=request.POST.get("username"),
-            password=request.POST.get("password")
-        )
+        user = authenticate(request, username=request.POST.get("username"), password=request.POST.get("password"))
         if user:
             login(request, user)
-            return redirect("dashboard")
+            
+            # 1. PRIORITY CHECK: If they have a teacher profile, always send them to their dashboard first
+            if hasattr(user, 'teacher_profile'):
+                return redirect("teacher_dashboard")
+                
+            # 2. ADMIN CHECK: If they are not a teacher but are admin/staff, send to the core system dashboard
+            if user.is_superuser or getattr(user, 'is_staff', False):
+                return redirect("dashboard")
+                
+            return redirect("login")
+        else:
+            # Fixed to pass 'error' directly to your new, professional HTML template error container
+            return render(request, "login.html", {"error": "Invalid username or password"})
+            
     return render(request, "login.html")
 
+# Protect the main dashboard view from standard teacher entries
+@login_required
+@user_passes_test(is_admin)  
+def dashboard(request):
+    return render(request, "dashboard.html")
+
+#--------------------------end of login view --------------------------------------------------
 @login_required
 def logout_view(request):
     logout(request)
@@ -84,352 +106,356 @@ def logout_view(request):
 def dashboard(request):
     return render(request, "dashboard.html")
 
-# =========================-------------------------------------------------------------------------
-import json
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.http import JsonResponse
-from django.shortcuts import render, redirect, get_object_or_404
-from django.db import transaction
-from .models import Student
-
-# Define the user test helper function
-def is_admin(user):
-    return user.is_authenticated and getattr(user, 'is_staff', False)
-
-# =========================
-# ADD SINGLE STUDENT
-# =========================
+# =====================================================
+# 3. STUDENT MANAGEMENT
+# =====================================================
 
 @login_required
 @user_passes_test(is_admin)
 def add_student(request):
     if request.method == "POST":
-        admission_number = request.POST.get("admission_number")
-
-        if Student.objects.filter(admission_number=admission_number).exists():
+        adm = request.POST.get("admission_number")
+        if Student.objects.filter(admission_number=adm).exists():
             messages.error(request, "Admission number already exists.")
             return redirect("add_student")
 
         Student.objects.create(
             student_name=request.POST.get("student_name"),
-            admission_number=admission_number,
+            admission_number=adm,
             grade=request.POST.get("grade"),
             parent_name=request.POST.get("parent_name"),
             parent_phone=request.POST.get("parent_phone"),
         )
         messages.success(request, "Student profile added successfully.")
         return redirect("dashboard")
-
-    return render(
-        request,
-        "add_student.html",
-        {"grades": [f"Grade {i}" for i in range(1, 10)]}
-    )
-
-# =========================
-# GRADE STUDENTS
-# =========================
+    return render(request, "add_student.html", {"grades": [f"Grade {i}" for i in range(1, 10)]})
+#----------------------------------grade students view--------------
 @login_required
 def grade_students(request, grade):
-
+    # Standardise the grade input from the URL string
     grade_num = str(grade).replace("Grade ", "").strip()
     grade_name = f"Grade {grade_num}"
+    
+    # 🔒 SECURITY CHECK: If the user is NOT an admin, enforce allocation limits
+    if not (request.user.is_superuser or getattr(request.user, 'is_staff', False)):
+        if hasattr(request.user, 'teacher_profile'):
+            # Fetch all grades this specific teacher is assigned to manage
+            allowed_grades = Allocation.objects.filter(
+                teacher=request.user.teacher_profile
+            ).values_list('grade', flat=True)
+            
+            # If they try to view an unassigned grade, block access immediately
+            if grade_name not in allowed_grades:
+                return HttpResponseForbidden("Access Denied: You are not allocated to teach this grade.")
+        else:
+            # If user has no teacher profile and isn't staff, block completely
+            return HttpResponseForbidden("Access Denied: Invalid profile access parameters.")
 
-    students = Student.objects.filter(
-        grade=grade_name
-    ).order_by("admission_number")   # smallest ID → highest ID
+    # Fetch and display students belonging only to the verified grade
+    students = Student.objects.filter(grade=grade_name).order_by("admission_number")
+    
+    return render(request, "grade_students.html", {
+        "students": students, 
+        "grade": grade_num, 
+        "grade_name": grade_name
+    })
 
-    return render(
-        request,
-        "grade_students.html",
-        {
-            "students": students,
-            "grade": grade_num,
-            "grade_name": grade_name
-        }
-    )
-
-# =========================
-# BULK ADD/UPDATE STUDENTS
-# =========================
-
+#------------------------------------end of grade students view----------------
 @login_required
 @user_passes_test(is_admin)
 def add_students_bulk(request):
-    if request.method != "POST":
-        return JsonResponse({"success": False, "message": "Invalid request method."}, status=405)
-
+    if request.method != "POST": return JsonResponse({"success": False}, status=405)
     try:
         data = json.loads(request.body)
         student_list = data.get("students", [])
-        
-        if not student_list:
-            return JsonResponse({"success": False, "message": "No student data provided."}, status=400)
-
-        # Extract all incoming admission numbers to query the database once
-        admission_numbers = [s.get("admission_number") for s in student_list if s.get("admission_number")]
-        
-        # Map existing database records by admission number
-        existing_students = {
-            s.admission_number: s 
-            for s in Student.objects.filter(admission_number__in=admission_numbers)
-        }
-
-        new_students_to_create = []
-        students_to_update = []
+        admission_numbers = [s.get("admission_number") for s in student_list]
+        existing = {s.admission_number: s for s in Student.objects.filter(admission_number__in=admission_numbers)}
+        new_batch, update_batch = [], []
 
         for s in student_list:
-            adm_num = s.get("admission_number")
-            if not adm_num:
-                continue
-
-            if adm_num in existing_students:
-                # Update properties of existing records
-                student_obj = existing_students[adm_num]
-                student_obj.student_name = s.get("student_name", student_obj.student_name)
-                student_obj.parent_name = s.get("parent_name", student_obj.parent_name)
-                student_obj.parent_phone = s.get("parent_phone", student_obj.parent_phone)
-                student_obj.grade = s.get("grade", student_obj.grade)
-                students_to_update.append(student_obj)
+            adm = s.get("admission_number")
+            if not adm: continue
+            if adm in existing:
+                obj = existing[adm]
+                obj.student_name = s.get("student_name")
+                obj.grade = s.get("grade")
+                obj.parent_name = s.get("parent_name", obj.parent_name)
+                obj.parent_phone = s.get("parent_phone", obj.parent_phone)
+                update_batch.append(obj)
             else:
-                # Stage new record for creation
-                new_students_to_create.append(
-                    Student(
-                        admission_number=adm_num,
-                        student_name=s.get("student_name"),
-                        parent_name=s.get("parent_name", ""),
-                        parent_phone=s.get("parent_phone", ""),
-                        grade=s.get("grade"),
-                    )
-                )
+                new_batch.append(Student(admission_number=adm, student_name=s.get("student_name"), grade=s.get("grade")))
 
-        # Execute batched operations inside a secure database transaction
         with transaction.atomic():
-            if new_students_to_create:
-                Student.objects.bulk_create(new_students_to_create)
-            if students_to_update:
-                Student.objects.bulk_update(
-                    students_to_update, 
-                    fields=["student_name", "parent_name", "parent_phone", "grade"]
-                )
-
-        return JsonResponse({
-            "success": True, 
-            "message": f"Successfully processed {len(new_students_to_create)} additions and {len(students_to_update)} updates."
-        })
-
-    except json.JSONDecodeError:
-        return JsonResponse({"success": False, "message": "Malformed JSON payload."}, status=400)
+            if new_batch: Student.objects.bulk_create(new_batch)
+            if update_batch: Student.objects.bulk_update(update_batch, fields=["student_name", "grade", "parent_name", "parent_phone"])
+        return JsonResponse({"success": True})
     except Exception as e:
         return JsonResponse({"success": False, "message": str(e)}, status=500)
-
-# =========================
-# EDIT STUDENT
-# =========================
 
 @login_required
 @user_passes_test(is_admin)
 def edit_student(request, student_id):
     student = get_object_or_404(Student, id=student_id)
-
     if request.method == "POST":
-        admission_number = request.POST.get("admission_number")
-
-        if Student.objects.exclude(id=student.id).filter(admission_number=admission_number).exists():
-            messages.error(request, "Admission number already exists.")
-            return redirect("edit_student", student_id=student.id)
-
         student.student_name = request.POST.get("student_name")
-        student.admission_number = admission_number
+        student.admission_number = request.POST.get("admission_number")
         student.grade = request.POST.get("grade")
         student.parent_name = request.POST.get("parent_name")
         student.parent_phone = request.POST.get("parent_phone")
         student.save()
-
-        messages.success(request, f"{student.student_name} updated successfully.")
-        grade_num = student.grade.replace("Grade ", "").strip()
-        return redirect("grade_students", grade=grade_num)
-
-    return render(
-        request,
-        "edit_student.html",
-        {"student": student, "grades": [f"Grade {i}" for i in range(1, 10)]}
-    )
-
-# =========================
-# DELETE STUDENT
-# =========================
+        messages.success(request, "Student updated successfully.")
+        return redirect("dashboard")
+    return render(request, "edit_student.html", {"student": student})
 
 @login_required
 @user_passes_test(is_admin)
 def delete_student(request, student_id):
     student = get_object_or_404(Student, id=student_id)
-    grade_num = student.grade.replace("Grade ", "").strip()
     
+    # 1. Save the grade before the student is gone
+    # If student.grade is "Grade 1", we just want the "1"
+    grade_value = str(student.grade).replace("Grade ", "").strip()
+    
+    # 2. Delete the record
     student.delete()
-    messages.success(request, "Student deleted successfully.")
+    messages.success(request, f"Student deleted from Grade {grade_value}.")
     
-    return redirect("grade_students", grade=grade_num)
+    # 3. Redirect back to the grade list
+    # Assuming your URL name is 'grade_students'
+    return redirect('grade_students', grade=grade_value)
 
 
 
+# =====================================================
+# 4. LIBRARY ERP (ISSUE & RETURN)
+# =====================================================
 
-# =========================-------------------------------------------------------------------------
-# MARKS ENTRY
-# =========================
+#----------------------------------------------------------------------------------------
+import json
+import datetime
+from django.db import transaction
+from django.http import JsonResponse
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from .models import Book, BorrowRecord, Student, Teacher
 
-@login_required
-def add_mark(request):
-    grades = [f"Grade {i}" for i in range(1, 10)]
-    current_year = datetime.datetime.now().year
-    years = [str(y) for y in range(2024, current_year + 5)]
+# 1. MOVE HELPER FUNCTIONS TO THE TOP
+def handle_borrow(data):
+    due_date_str = data.get("due_date")
+    try:
+        due_date_obj = datetime.datetime.strptime(due_date_str, '%Y-%m-%d').date()
+    except (ValueError, TypeError):
+        return JsonResponse({"error": "Invalid date format"}, status=400)
 
-    sel_grade = request.GET.get("grade")
-    sel_sub = request.GET.get("subject")
-    subjects = get_subjects_for_grade(sel_grade) if sel_grade else []
-    
-    # Corrected subject sequence matching query lookup tracking array logic
-    if not sel_sub and subjects:
-        sel_sub = subjects[0]
+    with transaction.atomic():
+        try:
+            book = Book.objects.select_for_update().get(title=data.get("book_name"))
+            if book.available_copies < 1:
+                return JsonResponse({"error": "No copies available"}, status=400)
+            
+            BorrowRecord.objects.create(
+                member_name=data.get("member_name"), 
+                member_type=data.get("member_type"),
+                book=book, 
+                copies=data.get("copies", 1),
+                due_date=due_date_obj,
+                status="Borrowed"
+            )
+            book.available_copies -= 1
+            book.save()
+            return JsonResponse({"success": True})
+        except Book.DoesNotExist:
+            return JsonResponse({"error": "Book not found"}, status=404)
 
-    term = request.GET.get("term", "1")
-    year = request.GET.get("year", str(current_year))
-    students = Student.objects.filter(grade=sel_grade) if sel_grade else []
-    marks_qs = Mark.objects.filter(subject=sel_sub, term=term, year=year)
-    marks_map = {m.student_id: m.marks for m in marks_qs}
+def handle_return(data):
+    with transaction.atomic():
+        try:
+            record = BorrowRecord.objects.select_for_update().get(id=data.get("record_id"))
+            if record.status != "Returned":
+                record.status = "Returned"
+                record.return_date = datetime.date.today()
+                record.save()
+                record.book.available_copies += 1
+                record.book.save()
+                return JsonResponse({"success": True})
+        except BorrowRecord.DoesNotExist:
+            return JsonResponse({"error": "Record not found"}, status=404)
+    return JsonResponse({"error": "Already returned"}, status=400)
 
+# 2. MAIN LIBRARY VIEW AT THE BOTTOM
+@login_required  # STEP 1: Django checks if the user is logged into the system.
+@user_passes_test(is_admin)  # STEP 2: 🔒 THE BLOCKING POINT! Django runs your 'is_admin' check here. 
+                             # If the user has a teacher_profile, it returns False and blocks them immediately.
+                             # Teachers get booted away and NEVER reach the code below.
+def library(request):
+    # =========================================================================
+    # EVERYTHING BELOW HERE ONLY RUNS IF THE LOGGED-IN USER IS A TRUE ADMIN!
+    # =========================================================================
     if request.method == "POST":
-        out_of = float(request.POST.get("out_of") or 100)
-        for s in students:
-            val = request.POST.get(f"marks_{s.id}")
-            if val:
-                perc = (float(val) / out_of) * 100
-                Mark.objects.update_or_create(
-                    student=s, subject=sel_sub, term=term, year=year,
-                    defaults={"marks": int(perc)}
-                )
-        messages.success(request, "Marks updated successfully.")
-        return redirect(f"/marks/add/?grade={sel_grade}&subject={sel_sub}&term={term}&year={year}")
+        try:
+            data = json.loads(request.body)
+            action = data.get("action")
+            if action == "borrow":
+                return handle_borrow(data)
+            elif action == "return":
+                return handle_return(data)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
 
-    return render(request, "add_mark.html", {
-        "grades": grades, "years": years, "subjects": subjects, "students": students,
-        "marks_map": marks_map, "selected_grade": sel_grade, "selected_subject": sel_sub,
-        "term": term, "year": year
-    })
-
-# =========================
-# VIEW LIST & RANKING
-# =========================
-
-@login_required
-def view_list(request):
-    grades = [f"Grade {i}" for i in range(1, 10)]
-    sel_grade = request.GET.get("grade", "Grade 1")
-    sel_term = request.GET.get("term", "1")
-    sel_year = request.GET.get("year", str(datetime.datetime.now().year))
-
-    subjects = get_subjects_for_grade(sel_grade)
-    students = Student.objects.filter(grade=sel_grade)
-    performance_data = []
-
-    for student in students:
-        marks_qs = Mark.objects.filter(student=student, term=sel_term, year=sel_year)
-        total = marks_qs.aggregate(Sum('marks'))['marks__sum'] or 0
-        avg = marks_qs.aggregate(Avg('marks'))['marks__avg'] or 0
-        marks_dict = {m.subject: m.marks for m in marks_qs}
-
-        subject_marks = [
-            {"score": marks_dict.get(sub), "rubric": get_cbc_rubric_data(marks_dict.get(sub))["code"]}
-            for sub in subjects
-        ]
-        performance_data.append({
-            "student": student,
-            "subject_marks": subject_marks,
-            "total": total,
-            "overall_rubric": get_cbc_rubric_data(avg)["code"]
-        })
-
-    performance_data.sort(key=lambda x: x["total"], reverse=True)
-
-    return render(request, "view_list.html", {
-        "grades": grades, "terms": ["1", "2", "3"],
-        "years": [str(y) for y in range(2024, datetime.datetime.now().year + 5)],
-        "performance_data": performance_data, "subjects": subjects,
-        "selected_grade": sel_grade, "selected_term": sel_term, "selected_year": sel_year,
-
-
-    })
-
-
-# =========================---------------------------------------------------------------------------
-# PDF GENERATION
-# =========================
-
-@login_required
-def download_view_list_pdf(request):
-    # 1. Get Filters from URL
-    sel_grade = request.GET.get("grade", "Grade 1")
-    sel_term = request.GET.get("term", "1")
-    sel_year = request.GET.get("year", str(datetime.datetime.now().year))
-
-    # 2. Prepare Data
-    subjects = get_subjects_for_grade(sel_grade)
-    students_qs = Student.objects.filter(grade=sel_grade)
+    today = datetime.date.today()
+    recs = BorrowRecord.objects.select_related("book").order_by("-borrow_date")
     
-    performance_data = []
-    for student in students_qs:
-        marks_qs = Mark.objects.filter(student=student, term=sel_term, year=sel_year)
-        total = marks_qs.aggregate(Sum('marks'))['marks__sum'] or 0
-        avg = marks_qs.aggregate(Avg('marks'))['marks__avg'] or 0
-        
-        marks_dict = {m.subject: m.marks for m in marks_qs}
-        
-        # Build subject marks list specifically for the template loops
-        subject_marks = []
-        for sub in subjects:
-            score = marks_dict.get(sub)
-            subject_marks.append({
-                "score": score,
-                "rubric": get_cbc_rubric_data(score)["code"] if score is not None else ""
-            })
-
-        performance_data.append({
-            "student": student,
-            "subject_marks": subject_marks,
-            "total": total,
-            "overall_rubric": get_cbc_rubric_data(avg)["code"]
+    formatted = []
+    for r in recs:
+        st = r.status
+        if st == "Borrowed" and r.due_date and r.due_date < today: 
+            st = "Overdue"
+            
+        formatted.append({
+            "id": r.id, 
+            "member_name": r.member_name,
+            "member_type": r.member_type,
+            "book__title": r.book.title, 
+            "copies": r.copies,
+            "status": st, 
+            "due_date": str(r.due_date)
         })
 
-    # 3. Rank Students
-    performance_data.sort(key=lambda x: x["total"], reverse=True)
-    for i, item in enumerate(performance_data):
-        item["rank"] = i + 1
-
-    # 4. Context for BOTH templates
     context = {
-        "students_list": performance_data, # Use this key in both HTML files
-        "subjects": subjects,
-        "grade": sel_grade,
-        "term": sel_term,
-        "year": sel_year,
+        "books": list(Book.objects.values("id", "title", "available_copies", "grade").order_by("title")),
+        "students": list(Student.objects.values("student_name", "grade").order_by("student_name")),
+        "teachers": list(Teacher.objects.values("name").order_by("name")),
+        "records": formatted,
     }
+    return render(request, "library.html", context)
 
-    # 5. Handle the PDF Generation
-    template = get_template("view_list_pdf.html")
-    html = template.render(context)
-    
-    response = HttpResponse(content_type="application/pdf")
-    response['Content-Disposition'] = f'attachment; filename="Ranking_{sel_grade}.pdf"'
-    
-    pisa_status = pisa.CreatePDF(html, dest=response)
-    
-    if pisa_status.err:
-        return HttpResponse(f"Error: {pisa_status.err}")
-    return response
-#--------------------------edit students attributes------------------------------
 
-#-----------------------------------------add mark attribute-----------------------------------------------
+
+#---------------------------------------------------Managing books-----------------------
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from .models import Book  # Ensure this import matches your app structure
+
+@login_required
+def manage_books(request):
+    if request.method == "POST":
+        action = request.POST.get("action")
+        title = request.POST.get("title")
+        author = request.POST.get("author")
+        grade = request.POST.get("grade")
+        
+        # Safe conversion to integer with fallback
+        try:
+            copies = int(request.POST.get("copies", 1))
+        except ValueError:
+            copies = 1
+
+        if action == "add":
+            Book.objects.create(
+                title=title, 
+                author=author, 
+                grade=grade, 
+                total_copies=copies, 
+                available_copies=copies
+            )
+        
+        elif action == "edit":
+            # FIXED: Changed from 'book_id' to 'edit_id' to match the HTML input ID name
+            book_id = request.POST.get("edit_id") 
+            
+            # FIXED: Use get_object_or_404 to avoid 500 crashes if a book is missing
+            book = get_object_or_404(Book, id=book_id)
+            
+            # Adjust available copies based on the change in total copies
+            diff = copies - book.total_copies
+            book.title = title
+            book.author = author
+            book.grade = grade
+            book.total_copies = copies
+            book.available_copies = max(0, book.available_copies + diff)  # Prevent negative stock
+            book.save()
+
+        return redirect('manage_books')
+
+    # Fetch books ordered by newest first
+    books = Book.objects.all().order_by("-id")
+    return render(request, "manage_books.html", {"books": books})
+
+
+
+
+#-----------------------------------------end of managing books-------------------------------------
+@login_required
+@user_passes_test(is_admin)
+def delete_book(request, book_id):
+    get_object_or_404(Book, id=book_id).delete()
+    messages.success(request, "Book deleted.")
+    return redirect('manage_books')
+#----------------------------------------------------------------teachers registry---------------------
+from django.contrib.auth.models import User
+from django.db import IntegrityError
+
+@login_required
+@user_passes_test(is_admin)
+def teachers(request):
+    if request.method == "POST":
+        teacher_name = request.POST.get("name")
+        phone_number = request.POST.get("phone")
+        username_input = request.POST.get("username")
+        password_input = request.POST.get("password")
+
+        # 1. Validation checks
+        if not teacher_name or not username_input or not password_input:
+            messages.error(request, "All fields (Name, Username, Password) are required.")
+            return redirect("teachers")
+
+        if User.objects.filter(username=username_input).exists():
+            messages.error(request, f"The login username '{username_input}' is already taken.")
+            return redirect("teachers")
+
+        try:
+            with transaction.atomic():
+                # 2. Create the secure Django User Login Account
+                new_user = User.objects.create_user(
+                    username=username_input,
+                    password=password_input,
+                    first_name=teacher_name.split()[0] if ' ' in teacher_name else teacher_name
+                )
+                # Ensure they don't get full admin clearance
+                new_user.is_staff = False
+                new_user.is_superuser = False
+                new_user.save()
+
+                # 3. Create and Link the Teacher Data Profile
+                Teacher.objects.create(
+                    user=new_user,
+                    name=teacher_name,
+                    phone=phone_number
+                )
+                
+            messages.success(request, f"Teacher {teacher_name} successfully registered with active login credentials!")
+            return redirect("teachers")
+
+        except IntegrityError:
+            messages.error(request, "A teacher with that display name already exists.")
+            return redirect("teachers")
+            
+    # Fetch all teachers currently in the system to display on the page roster
+    all_teachers = Teacher.objects.all().select_related('user')
+    return render(request, "teachers.html", {"teachers": all_teachers})
+
+#------------------------------------end of teachers registry------------------
+@login_required
+@user_passes_test(is_admin)
+def delete_teacher(request, teacher_id):
+    get_object_or_404(Teacher, id=teacher_id).delete()
+    messages.success(request, "Teacher removed.")
+    return redirect('teachers')
+
+# =====================================================
+# 6. MARKS, REPORTS & ALLOCATION
+# =====================================================
+#-----------------------------------------add mark--------------------
 @login_required
 def add_mark(request):
     # Setup standard attributes for dropdowns
@@ -489,342 +515,455 @@ def add_mark(request):
         "term": term,
         "year": year
     })
-#-----------------------marks entry--------------------------------
+#-------------------------------------------------------------------
+
 @login_required
 def marks_entry(request):
     return render(request, "marks_entry.html")
 
-#------------------------generate report card attribute-------------
-import datetime
-from django.shortcuts import get_object_or_404
-from django.http import HttpResponse
-from django.contrib.auth.decorators import login_required
-from django.db.models import Sum
-from django.template.loader import get_template
-from xhtml2pdf import pisa
+@login_required
+def marks_add(request):
+    return JsonResponse({"status": "ok"})
 
-# Ensure these are imported from your actual project structure
-# from .models import Student, Mark, Allocation 
-# from .utils import get_cbc_rubric_data
-
-import datetime
-from django.db.models import Sum
-from django.shortcuts import get_object_or_404, render
-from django.http import HttpResponse
-from django.template.loader import get_template
-from xhtml2pdf import pisa
+#-------------------------view list attributes-----------------------
+from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-# Import your models here (Student, Mark, Allocation, etc.)
+from .models import Student, Mark  # Ensure these match your models
 
 @login_required
+def view_list(request):
+    # Match the filters used in add_mark
+    sel_grade = request.GET.get("grade")
+    term = request.GET.get("term", "1")
+    year = request.GET.get("year", "2026") # Matches your previous error URL
+
+    # 1. Get the same subjects that add_mark uses
+    subjects = get_subjects_for_grade(sel_grade) if sel_grade else []
+    students = Student.objects.filter(grade=sel_grade) if sel_grade else []
+
+    performance_data = []
+
+    for s in students:
+        row_marks = []
+        total_score = 0
+        count = 0
+        
+        for sub in subjects:
+            # Query the 'marks' field exactly as saved in add_mark
+            m = Mark.objects.filter(student=s, subject=sub, term=term, year=year).first()
+            
+            score = m.marks if m else None
+            if score is not None:
+                total_score += score
+                count += 1
+            
+            row_marks.append({
+                'score': score,
+                'rubric': calculate_rubric_from_percent(score) if score is not None else ""
+            })
+
+        # Calculate average and overall rubric
+        avg = total_score / count if count > 0 else 0
+        
+        performance_data.append({
+            'student': s,
+            'subject_marks': row_marks,
+            'total': total_score,
+            'overall_rubric': calculate_rubric_from_percent(avg)
+        })
+
+    # Sort by total for the ranking
+    performance_data = sorted(performance_data, key=lambda x: x['total'], reverse=True)
+
+    return render(request, "view_list.html", {
+        "performance_data": performance_data,
+        "subjects": subjects,
+        "selected_grade": sel_grade,
+        "selected_term": term,
+        "selected_year": year,
+        "grades": [f"Grade {i}" for i in range(1, 10)],
+        "terms": ["1", "2", "3"]
+    })
+
+# Helper function to match the "Rubric" column in your HTML
+def calculate_rubric_from_percent(score):
+    if score >= 80: return "EE" # Exceeding Expectations
+    if score >= 50: return "ME" # Meeting Expectations
+    if score >= 30: return "AE" # Approaching Expectations
+    return "BE" # Below Expectations
+
+
+#-------------------end of view list attributes -------------------------
+
+@login_required
+def download_view_list_pdf(request):
+    return HttpResponse("PDF generator placeholder")
+#----------------------------------------report card view ----------------------
+@login_required  # STEP 1: Django verifies that the user is securely logged in.
+@user_passes_test(is_admin)  # STEP 2: 🔒 THE BLOCKING POINT! Django executes your 'is_admin' function here.
+                             # If a regular teacher tries to access this path, it returns False and blocks them instantly.
+                             # They are rejected and redirected away before reading any of the grade or rubric compilation logic below.
 def report_card(request, id):
-    # 1. Fetch Student
+    # =========================================================================
+    # EVERYTHING BELOW HERE ONLY EXECUTES IF THE LOGGED-IN USER IS A TRUE ADMIN!
+    # =========================================================================
     student = get_object_or_404(Student, id=id)
 
-    # 2. Get Filters from URL
-    term = request.GET.get("term", "1")
-    year = request.GET.get("year", str(datetime.datetime.now().year))
-    force_download = request.GET.get("download") == "1"
+    selected_term = request.GET.get("term", "1")
+    selected_year = request.GET.get("year", "2026")
 
-    # 3. Fetch Marks
-    marks_qs = Mark.objects.filter(student=student, term=term, year=year)
-    
-    enriched_marks = []
-    total_val = 0
+    subjects = get_subjects_for_grade(student.grade)
 
-    for m in marks_qs:
-        # Handle potential None in m.marks
-        current_score = m.marks if m.marks is not None else 0
-        
-        # Teacher Lookup safety
-        allocation = Allocation.objects.filter(subject=m.subject, grade=student.grade).first()
-        teacher_name = (allocation.teacher.name if allocation and allocation.teacher else "Subject Teacher")
+    subject_marks = []
+    total_marks = 0
+    count = 0
 
-        # Rubric Logic safety: Ensure rubric is never None
-        rubric = get_cbc_rubric_data(current_score)
-        if not rubric:
-            rubric = {'code': 'N/A', 'label': 'No Data'}
+    for subject in subjects:
+        mark_obj = Mark.objects.filter(
+            student=student,
+            subject=subject,
+            term=selected_term,
+            year=selected_year
+        ).first()
 
-        enriched_marks.append({
-            'subject': m.subject,
-            'teacher_name': teacher_name,
-            'score': current_score,
-            'rubric': rubric 
+        score = mark_obj.marks if mark_obj else None
+
+        if score is not None:
+            total_marks += score
+            count += 1
+
+        subject_marks.append({
+            "subject": subject,
+            "score": score,
+            "rubric": calculate_rubric_from_percent(score) if score is not None else ""
         })
-        total_val += current_score
 
-    # 4. Calculations
-    count = marks_qs.count()
-    average_marks = round(total_val / count, 2) if count > 0 else 0
-    
-    # Safety check for overall rubric
-    overall_grade_data = get_cbc_rubric_data(average_marks)
-    overall_code = overall_grade_data.get('code', 'N/A') if overall_grade_data else 'N/A'
+    average_marks = round(total_marks / count, 1) if count else 0
 
-    # 5. Ranking Logic
-    student_rankings = (
-        Mark.objects.filter(student__grade=student.grade, term=term, year=year)
-        .values('student')
-        .annotate(total=Sum('marks'))
-        .order_by('-total')
-    )
-
-    position = "N/A"
-    if student_rankings.exists():
-        for i, rank in enumerate(student_rankings):
-            if rank['student'] == student.id:
-                position = i + 1
-                break
-
-    # 6. Context for the Template
     context = {
         "student": student,
-        "marks": enriched_marks,
-        "term": term,
-        "year": year,
-        "total_marks": total_val,
+        "selected_grade": student.grade,
+        "selected_term": selected_term,
+        "selected_year": selected_year,
+        "subject_marks": subject_marks,
+        "total_marks": total_marks,
         "average_marks": average_marks,
-        "overall_grade": overall_code,
-        "position": position,
-        "class_teacher_name": "Class Teacher", 
-        "head_teacher_name": "Head Teacher",
-        "is_pdf": True, 
+        "overall_rubric": calculate_rubric_from_percent(average_marks),
     }
 
-    # 7. Render PDF
-    template = get_template("report_card_pdf.html")
-    html = template.render(context)
-    
-    response = HttpResponse(content_type="application/pdf")
-    
-    disposition = "attachment" if force_download else "inline"
-    filename = f"Report_{student.admission_number}_Term{term}_{year}.pdf"
-    response['Content-Disposition'] = f'{disposition}; filename="{filename}"'
-    
-    # Generate PDF
-    pisa_status = pisa.CreatePDF(html, dest=response)
-    
-    if pisa_status.err:
-        return HttpResponse(f"Error generating report: {pisa_status.err}", status=500)
-        
-    return response
-#--------------------------------download pdf attribute-----------------------------------
+    return render(request, "report_card_pdf.html", context)
+#-----------------------end of report card view -----------------------
+#-----------------------------------------lesson allocation ----------
 @login_required
-def download_pdf(request): return HttpResponse("OK")
-
-#------------------------------library-----------------------------------
-import json
-import datetime
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, get_object_or_404
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_protect
-from .models import Book, BorrowRecord
-
-@login_required
-@csrf_protect
-def library(request):
-    """
-    Main View: Handles page rendering (GET) and AJAX transactions (POST).
-    """
-    
+@user_passes_test(is_admin)
+def lesson_allocation(request):
     if request.method == "POST":
-        try:
-            # Check if request body is empty
-            if not request.body:
-                return JsonResponse({"error": "No data received"}, status=400)
+        teacher_id = request.POST.get("teacher")
+        subject = request.POST.get("subject")
+        grade = request.POST.get("grade")
+        
+        singles = int(request.POST.get("singles", 0))
+        doubles = int(request.POST.get("doubles", 0))
 
-            data = json.loads(request.body)
-            action = data.get("action")
+        teacher_instance = get_object_or_404(Teacher, id=teacher_id)
 
-            # --- CASE 1: RETURN A BOOK ---
-            if action == "return":
-                record_id = data.get("record_id")
-                if not record_id:
-                    return JsonResponse({"error": "Missing record ID"}, status=400)
-                
-                record = get_object_or_404(BorrowRecord, id=record_id)
+        exists = Allocation.objects.filter(teacher=teacher_instance, subject=subject, grade=grade).exists()
+        if exists:
+            messages.error(request, f"{teacher_instance.name} is already allocated to teach {subject} in {grade}.")
+            return redirect("lesson_allocation")
 
-                if record.status != "Returned":
-                    record.status = "Returned"
-                    record.return_date = datetime.date.today()
-                    record.save()
+        Allocation.objects.create(
+            teacher=teacher_instance,
+            subject=subject,
+            grade=grade,
+            singles=singles,
+            doubles=doubles
+        )
+        messages.success(request, f"Successfully allocated {subject} ({grade}) to {teacher_instance.name}!")
+        return redirect("lesson_allocation")
 
-                    # Restore Book Stock
-                    book = record.book
-                    book.available_copies += record.copies
-                    book.save()
+    # Fetch lookup choices and current allocations to populate the dashboard UI
+    teachers_list = Teacher.objects.all().order_by('name')
+    active_allocations = Allocation.objects.all().select_related('teacher')
+    
+    from .models import SUBJECT_CHOICES, GRADE_CHOICES
+    
+    # 🔑 FIXED: Packages each choice as a clean (Value, Label) pair for the HTML template
+    return render(request, "lesson_allocation.html", {
+        "teachers": teachers_list,
+        "allocations": active_allocations,
+        "subjects": [(choice[0], choice[1]) if isinstance(choice, tuple) else (choice, choice) for choice in SUBJECT_CHOICES],
+        "grades": [(choice[0], choice[1]) if isinstance(choice, tuple) else (choice, choice) for choice in GRADE_CHOICES],
+    })
 
-                return JsonResponse({"status": "success", "message": "Book returned"})
 
-            # --- CASE 2: BORROW A BOOK ---
-            elif action == "borrow":
-                member_name = data.get("member_name", "").strip()
-                member_type = data.get("member_type", "Student").strip()
-                book_name = data.get("book_name", "").strip()
-                copies = int(data.get("copies") or 1)
-                due_date_str = data.get("due_date")
+#---------------------------------------------------------------end of lesson --------------
+@login_required
+def teachers_registry(request):
+    return render(request, "teachers.html")
 
-                # Validation
-                if not member_name or not book_name or not due_date_str:
-                    return JsonResponse({"error": "All fields (Name, Book, Date) are required"}, status=400)
+def course_books(request): return render(request, "placeholder.html")
+def story_books(request): return render(request, "placeholder.html")
+def schemes(request): return render(request, "placeholder.html")
+def reports(request): return render(request, "placeholder.html")
+def fees(request): return render(request, "placeholder.html")
 
-                # Date Conversion
-                try:
-                    due_date = datetime.datetime.strptime(due_date_str, '%Y-%m-%d').date()
-                except ValueError:
-                    return JsonResponse({"error": "Invalid date format"}, status=400)
+def generate_timetable(request): return render(request, "generate_timetable.html")
 
-                # Find Book (Case Insensitive)
-                book = Book.objects.filter(title__iexact=book_name).first()
-                if not book:
-                    book = Book.objects.filter(title__icontains=book_name).first()
+#---------------------------------staff management-----------------------------
+from django.contrib.auth.models import User, Group
 
-                if not book:
-                    return JsonResponse({"error": f"Book '{book_name}' not found"}, status=400)
+@login_required
+@user_passes_test(lambda u: u.is_staff) # Only the main admin can access this
+def manage_staff(request):
+    if request.method == "POST":
+        user_nm = request.POST.get("username")
+        pass_wd = request.POST.get("password")
+        role = request.POST.get("role") # 'Librarian' or 'Teacher'
 
-                # Stock Check
-                if book.available_copies < copies:
-                    return JsonResponse({"error": f"Insufficient stock. Only {book.available_copies} left."}, status=400)
+        if User.objects.filter(username=user_nm).exists():
+            messages.error(request, "User already exists!")
+        else:
+            # Create user account
+            new_user = User.objects.create_user(username=user_nm, password=pass_wd)
+            
+            # Assign them to a group for permissions
+            group, created = Group.objects.get_or_create(name=role)
+            new_user.groups.add(group)
+            
+            messages.success(request, f"Account for {user_nm} created as {role}.")
+            return redirect('manage_staff')
 
-                # Transaction
-                BorrowRecord.objects.create(
-                    member_name=member_name,
-                    member_type=member_type,
-                    book=book,
-                    copies=copies,
-                    due_date=due_date,
-                    status="Borrowed"
-                )
+    # Get list of all staff members to show in a table
+    staff_members = User.objects.all().exclude(is_superuser=True)
+    return render(request, "manage_staff.html", {"staff": staff_members})
+#------------------------------end of staff management -------------------------------
+#--------------------------------students portal---------------------------
+from django.shortcuts import render
 
-                book.available_copies -= copies
-                book.save()
+def students_portal_view(request):
+    """
+    Open Access Controller: Renders the student portal instantly 
+    for anyone without demanding any login or authentication details.
+    """
+    # Using general guest variables since there is no logged-in user session required
+    context = {
+        'student_name': "Guest Learner",
+        'admission_number': "PUBLIC-ACCESS",
+        'current_grade': "General System",
+    }
+    
+    return render(request, 'students_portal.html', context)
 
-                return JsonResponse({"status": "success"})
 
-            # --- UNKNOWN ACTION ---
-            return JsonResponse({"error": f"Invalid action: {action}"}, status=400)
+#-----------------------------------end of students portal -----------------------
+#----------------------------------------------digital library page----------------------
+#----------------------------------------------digital library page----------------------
+# Locate your digital_library_view inside core/views.py and update it to this:
 
-        except json.JSONDecodeError:
-            return JsonResponse({"error": "Invalid JSON format"}, status=400)
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=500)
+def digital_library_view(request):
+    """
+    Fail-Safe Open Access Library Module: Pulls resource catalogs dynamically 
+    with built-in error traps to prevent server yellow-screen crashes.
+    """
+    try:
+        # Tries to pull live uploaded items from your database models
+        from .models import DigitalBook
+        books_catalog = DigitalBook.objects.all().order_by('-uploaded_at')
+    except ImportError:
+        # FALLBACK: If your Python installation cache locks up, it serves this clean directory dynamically instead of crashing!
+        books_catalog = [
+            {'title': 'Secondary Mathematics - Form 3', 'subject': 'Mathematics', 'book_type': 'Textbook', 'file': {'url': '#'}},
+            {'title': 'Blossoms of the Savannah', 'subject': 'English Lit', 'book_type': 'Setbook', 'file': {'url': '#'}},
+            {'title': 'Kigogo - Notes & Analysis', 'subject': 'Kiswahili', 'book_type': 'Guide', 'file': {'url': '#'}},
+            {'title': 'Fundamentals of Chemistry', 'subject': 'Chemistry', 'book_type': 'Reference', 'file': {'url': '#'}},
+        ]
+    
+    context = {
+        'catalog': books_catalog
+    }
+    return render(request, 'digital_library.html', context)
 
-    # ==========================================
-    # GET REQUEST (Page Load)
-    # ==========================================
-    books = Book.objects.all().order_by("title")
-    records_qs = BorrowRecord.objects.all().order_by("-id")
 
-    records_list = [
-        {
-            "id": r.id,
-            "name": r.member_name,
-            "type": r.member_type,
-            "book": r.book.title,
-            "copies": r.copies,
-            "due_date": str(r.due_date),
-            "status": r.status,
-        }
-        for r in records_qs
+#---------------------------------end of digital library page -------------------
+
+
+#---------------------------------end of digital library page -------------------
+#---------------------------add book---------------------
+from django.db import models
+
+class DigitalBook(models.Model):
+    BOOK_CHOICES = [
+        ('Textbook', 'Textbook'), 
+        ('Setbook', 'Setbook'), 
+        ('Guide', 'Guide'), 
+        ('Reference', 'Reference')
     ]
 
-    # Return the HTML template only for GET requests
-    return render(request, "library.html", {
-        "books": books,
-        "records": json.dumps(records_list)
-    })
+    title = models.CharField(max_length=255)
+    subject = models.CharField(max_length=100)
+    book_type = models.CharField(max_length=50, choices=BOOK_CHOICES)
+    file = models.FileField(upload_to='digital_library_books/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+
+#--------------------------------------------------end of add book----------------------
+
+#-----------------------teacher dashboard --------------------------
+# Ensure this exact name matches what is in your urls.py
+from django.db.models import Q
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseForbidden
+from django.contrib import messages
+import datetime
+from .models import Allocation, Student, Mark
 
 @login_required
-def return_book(request, record_id):
-    """Fallback endpoint for URL-based returns."""
-    if request.method == "POST":
-        record = get_object_or_404(BorrowRecord, id=record_id)
-        if record.status != "Returned":
-            record.status = "Returned"
-            record.return_date = datetime.date.today()
-            record.save()
-            
-            book = record.book
-            book.available_copies += record.copies
-            book.save()
-            return JsonResponse({"status": "success"})
-            
-    return JsonResponse({"error": "Invalid request"}, status=400)
+def teacher_dashboard(request):
+    try:
+        teacher = request.user.teacher_profile
+    except AttributeError:
+        return HttpResponseForbidden("Access Denied: You do not possess an active Teacher profile.")
 
-#------------------------------end of library ------------------------
-
-@login_required
-def reports(request): return render(request, "reports.html")
-@login_required
-def fees(request): return render(request, "fees.html")
-
-
-#--------------------------teachers---------------------------
-@login_required
-def teachers(request):
-    # 1. HANDLE ADDING A TEACHER (When button is clicked)
-    if request.method == "POST":
-        name = request.POST.get("name")
-        if name:
-            # This saves the teacher to your database
-            Teacher.objects.create(name=name)
-            return JsonResponse({"status": "success"})
-        return JsonResponse({"status": "error", "message": "Name is required"}, status=400)
-
-    # 2. FETCH ALL TEACHERS (To show in the table)
-    # This sends the database records to your HTML
-    all_teachers = Teacher.objects.all().order_by('name')
-
-    return render(request, 'teachers.html', {
-        'teachers': all_teachers
-    })
-
-@login_required
-def delete_teacher(request, teacher_id):
-    """Add this to handle the delete button"""
-    if request.method == "POST":
-        teacher = get_object_or_404(Teacher, id=teacher_id)
-        teacher.delete()
-        return JsonResponse({"status": "success"})
-    return JsonResponse({"status": "error"}, status=400)
-
-
-@login_required
-def lesson_allocation(request):
-    # Fetch data to populate the page
-    teachers = Teacher.objects.all().order_by('name')
-    allocations = Allocation.objects.all().order_by('-id')
+    # 1. Fetch all allocations assigned to this logged-in teacher account profile
+    allocations = Allocation.objects.filter(teacher=teacher)
     
-    return render(request, "lessons_allocation.html", {
-        "teachers": teachers,
-        "allocations": allocations
+    raw_grades = allocations.values_list('grade', flat=True).distinct()
+    raw_subjects = allocations.values_list('subject', flat=True).distinct()
+    
+    assigned_grades = [str(g).strip() for g in raw_grades if g]
+    assigned_subjects = [str(s).strip() for s in raw_subjects if s]
+
+    # 2. Extract input query parameters from the horizontal top row bar form form
+    selected_grade = request.GET.get('grade')
+    selected_subject = request.GET.get('subject')
+    selected_term = request.GET.get('term', '1')
+    selected_year = request.GET.get('year', '2026')
+    search_query = request.GET.get('search_query', '').strip()
+
+    students = None
+    marks_dict = {}
+
+    # 3. 🔑 SAFE GATE BLOCK: Only execute database queries if parameters are explicitly provided
+    if selected_grade and selected_subject:
+        # Relational security compliance checker gate
+        is_allocated = allocations.filter(grade=selected_grade, subject=selected_subject).exists()
+        if not is_allocated:
+            return HttpResponseForbidden("Security Violation: You do not teach this Grade and Subject combination.")
+
+        # Safely capture raw grade identifiers ("Grade 3" -> "3" / "3" -> "3")
+        raw_number = "".join(filter(str.isdigit, str(selected_grade)))
+        if not raw_number:
+            raw_number = str(selected_grade).replace("Grade", "").strip()
+
+        # Compile dynamic lookup query options array strings
+        variation_1 = f"Grade {raw_number}"
+        variation_2 = f"Grade{raw_number}"
+        variation_3 = str(raw_number)
+
+        # Run multi-format relational scans on global student register
+        students = Student.objects.filter(
+            Q(grade=variation_1) | Q(grade=variation_2) | Q(grade=variation_3)
+        )
+        
+        if search_query:
+            students = students.filter(student_name__icontains=search_query)
+
+        students = students.order_by('admission_number')
+
+        # Accumulate matching performance record lists
+        existing_marks = Mark.objects.filter(
+            Q(student__grade=variation_1) | Q(student__grade=variation_2) | Q(student__grade=variation_3),
+            subject=selected_subject, term=selected_term, year=selected_year
+        )
+        marks_dict = {m.student_id: m.marks for m in existing_marks}
+
+    # 4. Handle multi-column form spreadsheet POST saves (DIRECT TO MASTER DATABASE)
+    if request.method == "POST":
+        post_grade = request.POST.get("post_grade")
+        post_subject = request.POST.get("post_subject")
+        post_term = request.POST.get("post_term", "1")
+        post_year = request.POST.get("post_year", "2026")
+
+        if not allocations.filter(grade=post_grade, subject=post_subject).exists():
+            return HttpResponseForbidden("Unauthorized Assignment Action Blocked.")
+
+        saved_count = 0
+        for key, value in request.POST.items():
+            if key.startswith("student_mark_"):
+                student_id = key.replace("student_mark_", "")
+                score_value = value.strip()
+                
+                if score_value != "":
+                    student_instance = get_object_or_404(Student, id=student_id)
+                    Mark.objects.update_or_create(
+                        student=student_instance, subject=post_subject,
+                        term=int(post_term), year=int(post_year),
+                        defaults={'marks': int(score_value)}
+                    )
+                    saved_count += 1
+        
+        messages.success(request, f"Successfully recorded marks changes directly to the master school database!")
+        return redirect(f"{request.path}?grade={post_grade}&subject={post_subject}&term={post_term}&year={post_year}")
+
+    return render(request, 'teacher_dashboard.html', {
+        'teacher': teacher,
+        'allocations_grades': assigned_grades,
+        'allocations_subjects': assigned_subjects,
+        'students': students,
+        'marks_dict': marks_dict,
+        'selected_grade': selected_grade,
+        'selected_subject': selected_subject,
+        'selected_term': selected_term,
+        'selected_year': selected_year,
+        'search_query': search_query,
     })
 
+
+#-----------------------teacher enter marks -----------------------
 @login_required
-def generate_timetable(request):
-    # This view simply serves the generation page
-    # The actual plotting is handled by the JavaScript we wrote
-    return render(request, "generate_timetable.html")
-def library(request):
-    return render(request, "library.html")
+def teacher_enter_mark(request, student_id, subject):
+    try:
+        teacher = request.user.teacher_profile
+    except AttributeError:
+        return HttpResponseForbidden("Access Denied.")
 
+    student = get_object_or_404(Student, id=student_id)
 
-def course_books(request):
-    return render(request, "course_books.html")
+    # 🔒 Server-Side Security Check: Verify they actually teach this specific class & subject
+    is_authorized = Allocation.objects.filter(
+        teacher=teacher, 
+        grade=student.grade, 
+        subject=subject
+    ).exists()
 
+    if not is_authorized:
+        return HttpResponseForbidden("Security Violation: You are not allocated to grade these students or handle this subject.")
 
-def story_books(request):
-    return render(request, "story_books.html")
+    current_year = datetime.date.today().year
+    mark_instance = Mark.objects.filter(student=student, subject=subject, year=current_year).first()
 
+    if request.method == "POST":
+        score = request.POST.get('marks')
+        term = request.POST.get('term', 1)
+        
+        # Save or update the grade record securely
+        Mark.objects.update_or_create(
+            student=student,
+            subject=subject,
+            term=term,
+            year=current_year,
+            defaults={'marks': score}
+        )
+        messages.success(request, f"Marks updated successfully for {student.student_name}.")
+        return redirect('teacher_dashboard')
 
-def schemes(request):
-
-    return render(request, "schemes.html")
-
-
-def teachers_registry(request):
-    return render(request, "teacher.html")
-
-
-
+    return render(request, 'enter_mark.html', {
+        'student': student, 
+        'subject': subject,
+        'mark_instance': mark_instance
+    })
+#----------------------------------------end of teacher enter marks-------------

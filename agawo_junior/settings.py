@@ -8,13 +8,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # =========================
 # SECURITY
 # =========================
+# Keep the secret key used in production secret!
 SECRET_KEY = os.environ.get(
     'SECRET_KEY',
     default='django-insecure-17(a6ca#w@wrvm0536ll=4^=uhpbvc8t)e^^)=-kk*ywt__ju+'
 )
 
 # DEBUG: False in production (Render), True in development
-DEBUG = 'False' not in os.environ
+# This ensures it evaluates to a real Boolean value
+DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
 ALLOWED_HOSTS = [
     "localhost",
@@ -25,9 +27,14 @@ ALLOWED_HOSTS = [
 # Tell Django it is running behind Render's secure reverse proxy
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-# Accept and send session/CSRF cookies over HTTPS proxies securely
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+# Security upgrades when running in production mode
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
 
 # Trust your Render domain subdomains for form submissions
 CSRF_TRUSTED_ORIGINS = [
@@ -92,6 +99,7 @@ WSGI_APPLICATION = 'agawo_junior.wsgi.application'
 # =========================
 # DATABASE (PRODUCTION BACKEND CONNECTION)
 # =========================
+# Automatically switches to PostgreSQL on Render, falls back to SQLite locally
 DATABASES = {
     'default': dj_database_url.config(
         default=f'sqlite:///{BASE_DIR / "db.sqlite3"}',
@@ -124,7 +132,7 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Using WhiteNoise to serve static files
+# Using WhiteNoise to serve static files efficiently
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # =========================
@@ -137,3 +145,9 @@ LOGIN_URL = '/login/'
 # DEFAULT PRIMARY KEY
 # =========================
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# =========================
+# MEDIA FILES (UPLOADS)
+# =========================
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'

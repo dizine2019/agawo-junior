@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8">
     <title>Ranking Report</title>
+
     <style>
-        /* PDF Layout Settings */
         @page {
             size: A4 landscape;
             margin: 1cm;
@@ -16,11 +16,31 @@
             font-size: 9pt;
         }
 
-        .header {
-            text-align: center;
-            margin-bottom: 15px;
+        /* HEADER */
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
             border-bottom: 2px solid #1565c0;
-            padding-bottom: 5px;
+            margin-bottom: 15px;
+        }
+
+        .header-table td {
+            border: none;
+            vertical-align: middle;
+        }
+
+        .logo-cell {
+            width: 120px;
+            text-align: left;
+        }
+
+        .logo {
+            width: 90px;
+            height: auto;
+        }
+
+        .school-info {
+            text-align: center;
         }
 
         .school-name {
@@ -29,6 +49,12 @@
             font-weight: bold;
             margin: 0;
             text-transform: uppercase;
+        }
+
+        .report-title {
+            font-size: 14pt;
+            font-weight: bold;
+            margin: 5px 0;
         }
 
         table {
@@ -56,7 +82,6 @@
             text-align: left;
         }
 
-        /* Highlight Top 3 Students */
         .top-rank {
             background-color: #e3f2fd;
         }
@@ -81,97 +106,123 @@
         }
 
         .signature-box {
-            margin-top: 20px;
             width: 100%;
+            border-collapse: collapse;
+        }
+
+        .signature-box td {
+            border: none;
         }
     </style>
 </head>
 
 <body>
 
-<div class="header">
-    <p class="school-name">AGAWO JUNIOR SECONDARY SCHOOL</p>
-    <h2 style="margin:5px 0;">Performance Ranking Report</h2>
-    <p>
-        <strong>Grade:</strong> {{ grade }} | 
-        <strong>Term:</strong> {{ term }} | 
-        <strong>Year:</strong> {{ year }}
-    </p>
-</div>
+<!-- HEADER WITH LOGO -->
+<table class="header-table">
+    <tr>
+
+        <td class="logo-cell">
+            <img src="{{ logo_url }}" class="logo">
+        </td>
+
+        <td class="school-info">
+            <div class="school-name">
+                AGAWO JUNIOR SECONDARY SCHOOL
+            </div>
+
+            <div class="report-title">
+                PERFORMANCE RANKING REPORT
+            </div>
+
+            <p>
+                <strong>Grade:</strong> {{ grade }}
+                &nbsp;&nbsp;|
+                &nbsp;&nbsp;<strong>Term:</strong> {{ term }}
+                &nbsp;&nbsp;|
+                &nbsp;&nbsp;<strong>Year:</strong> {{ year }}
+            </p>
+        </td>
+
+    </tr>
+</table>
 
 <table>
     <thead>
         <tr>
-            <th style="width: 30px;">Pos</th>
-            <th style="width: 70px;">Adm No.</th>
-            <th class="text-left" style="width: 150px;">Student Name</th>
+            <th style="width:30px;">Pos</th>
+            <th style="width:70px;">Adm No.</th>
+            <th class="text-left" style="width:150px;">Student Name</th>
 
             {% for subject in subjects %}
-                <th>{{ subject }}</th>
+            <th>{{ subject }}</th>
             {% endfor %}
 
-            <th style="width: 50px;">Total</th>
-            <th style="width: 50px;">Grade</th>
+            <th style="width:50px;">Total</th>
+            <th style="width:50px;">Grade</th>
         </tr>
     </thead>
 
     <tbody>
+
         {% for entry in students %}
         <tr class="{% if entry.rank <= 3 %}top-rank{% endif %}">
-            
-            <!-- Rank Attribute -->
-            <td style="font-weight:bold;">{{ entry.rank }}</td>
 
-            <!-- Admission Attribute -->
+            <td><strong>{{ entry.rank }}</strong></td>
+
             <td>{{ entry.admission_number }}</td>
 
-            <!-- Name Attribute (Concatenated) -->
             <td class="text-left">
-                {{ entry.student.first_name }} {{ entry.student.last_name }}
+                {{ entry.student.student_name|upper }}
             </td>
 
-            <!-- Subject Marks Loop -->
             {% for item in entry.subject_marks %}
-                <td>
-                    {% if item.score is not None %}
-                        {{ item.score }}
-                        <span class="rubric-small">{{ item.rubric }}</span>
-                    {% else %}
-                        <span style="color:#999;">-</span>
-                    {% endif %}
-                </td>
+            <td>
+                {% if item.score is not None %}
+                    {{ item.score }}
+                    <span class="rubric-small">
+                        {{ item.rubric }}
+                    </span>
+                {% else %}
+                    -
+                {% endif %}
+            </td>
             {% endfor %}
 
-            <!-- Total Score Attribute -->
             <td class="total-cell">
                 {{ entry.total }}
             </td>
 
-            <!-- Overall Rubric Attribute -->
-            <td style="font-weight:bold; background-color:#e8f5e9; color:#2e7d32;">
+            <td style="font-weight:bold;">
                 {{ entry.total_rubrics }}
             </td>
 
         </tr>
         {% empty %}
         <tr>
-            <td colspan="20">No student records found for this selection.</td>
+            <td colspan="20">
+                No student records found for this selection.
+            </td>
         </tr>
         {% endfor %}
+
     </tbody>
 </table>
 
 <div class="footer">
-    <table class="signature-box" style="border:none;">
-        <tr style="border:none;">
-            <td style="text-align:left; border:none; width:50%;">
+
+    <table class="signature-box">
+        <tr>
+            <td style="text-align:left;">
                 Report Generated: {% now "jS F Y" %}
             </td>
-            <td style="text-align:right; border:none; width:50%;">
-                Principal's Signature: ___________________________
+
+            <td style="text-align:right;">
+                Principal's Signature: ____________________
             </td>
         </tr>
     </table>
+
 </div>
 
 </body>

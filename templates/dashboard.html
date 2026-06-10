@@ -68,10 +68,10 @@
 	margin:18px 0 12px;
 	}
 
-	/* ================= QUICK MODULES ================= */
+	/* ================= QUICK MODULES (UPDATED FOR 7 CARDS) ================= */
 	.quick-grid{
 	display:grid;
-	grid-template-columns:repeat(6, 1fr); /* force 6 in one row */
+	grid-template-columns:repeat(7, 1fr); /* Expanded from 6 to 7 to support Allocations row */
 	gap:8px;
 	margin-bottom:24px;
 	}
@@ -85,8 +85,11 @@
 	color:var(--text);
 	box-shadow:0 2px 6px rgba(0,0,0,0.04);
 	transition:0.25s ease;
-	font-size:12px;
+	font-size:11px; /* Slightly tightened font size to fit 7 columns cleanly */
 	text-align:center;
+	display:flex;
+	flex-direction:column;
+	justify-content:center;
 	}
 
 	.quick-card:hover{
@@ -109,15 +112,18 @@
 	.green{background:#dcfce7;color:#15803d;}
 	.orange{background:#fef3c7;color:#b45309;}
 	.red{background:#fee2e2;color:#b91c1c;}
+	.purple{background:#f3e8ff;color:#6b21a8;} /* Color token for new allocations button */
 
 	.quick-title{
 	font-size:12px;
 	font-weight:700;
+	line-height:1.2;
 	}
 
 	.quick-sub{
 	font-size:10px;
 	color:var(--muted);
+	margin-top:2px;
 	}
 
 	/* ================= GRADE PANEL ================= */
@@ -190,9 +196,13 @@
 	}
 
 	/* ================= MOBILE ================= */
+	@media(max-width:992px){
+	.quick-grid{grid-template-columns:repeat(4,1fr);} /* Drop down rows smoothly on medium screens */
+	}
+
 	@media(max-width:768px){
 	.school-name{font-size:24px;letter-spacing:1px;}
-	.quick-grid{grid-template-columns:repeat(2,1fr);} /* stack on mobile */
+	.quick-grid{grid-template-columns:repeat(2,1fr);} /* 2 per row on mobile devices */
 	.grade-list{grid-template-columns:1fr;}
 	}
 </style>
@@ -220,6 +230,14 @@
 		<a href="{% url 'teachers' %}" class="quick-card">
 			<div class="quick-icon orange">👩‍🏫</div>
 			<div class="quick-title">Teachers Profile</div>
+			<div class="quick-sub">Staff roster</div>
+		</a>
+
+		<!-- 🔑 NEWLY INTEGRATED CLASSROOM ASSIGNMENT PORTAL -->
+		<a href="{% url 'lesson_allocation' %}" class="quick-card">
+			<div class="quick-icon purple">🗺️</div>
+			<div class="quick-title">Allocations</div>
+			<div class="quick-sub">Assign classes</div>
 		</a>
 
 		<a href="{% url 'library' %}" class="quick-card">
